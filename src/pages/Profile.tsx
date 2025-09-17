@@ -109,7 +109,7 @@ export default function Profile() {
 
         // Also attempt to hydrate from backend aggregate API
         try {
-          const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:3000";
+          const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
           const res = await fetch(`${API_BASE}/api/users`, { headers: { "Content-Type": "application/json" } });
           if (res.ok) {
             const users = await res.json();
@@ -172,7 +172,7 @@ export default function Profile() {
     if (!userId) return;
     try {
       // Save via backend to bypass RLS and update joins
-      const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:3000";
+      const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
       // Prefer unified edit endpoint if backend user id is known
       const fullName = (profile.name || "").trim();
       const parts = fullName.split(/\s+/);

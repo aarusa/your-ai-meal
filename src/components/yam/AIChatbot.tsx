@@ -47,7 +47,7 @@ export function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const resp = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api/chat`, {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL || "https://your-ai-meal-api.onrender.com"}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: [...messages, userMessage].map(m => ({ text: m.text, role: m.isBot ? "assistant" : "user" })) })

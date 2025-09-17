@@ -155,7 +155,7 @@ export function RegistrationStepper({ onSuccess }: RegistrationStepperProps) {
 
       // Helper: persist full registration payload via backend API
       const sendToBackend = async () => {
-        const API_BASE = (import.meta as any).env?.VITE_API_URL || "http://localhost:3000";
+        const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
         const fd: any = formData;
         try {
           const res = await fetch(`${API_BASE}/api/users`, {
