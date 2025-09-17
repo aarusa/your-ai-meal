@@ -8,8 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Package, ChefHat, Plus, Minus, X, Clock, Users, Star } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
-import { findMatchingRecipes, Recipe } from "@/data/recipes";
+import { Recipe } from "@/data/recipes";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function MyPantry() {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ export default function MyPantry() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
   const [showRecipes, setShowRecipes] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
 
   const toggleSelection = (productId: string) => {
     setSelectedItems(prev => {
@@ -38,23 +42,51 @@ export default function MyPantry() {
     setSelectedItems(new Set());
   };
 
-  const handleGenerateMeal = () => {
+  const handleGenerateMeal = async () => {
     if (selectedItems.size === 0) {
       toast.error("Please select at least one ingredient to generate a meal");
       return;
     }
 
-    const selectedProductIds = Array.from(selectedItems);
-    const matchingRecipes = findMatchingRecipes(selectedProductIds);
-    
-    if (matchingRecipes.length === 0) {
-      toast.error("No recipes found with your selected ingredients. Try selecting different ingredients!");
-      return;
-    }
+    try {
+      setIsGenerating(true);
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id || null;
 
-    setGeneratedRecipes(matchingRecipes);
-    setShowRecipes(true);
-    toast.success(`Found ${matchingRecipes.length} recipe(s) you can make!`);
+      const selected = pantryItems.filter(p => selectedItems.has(p.id));
+      const body = {
+        userId,
+        ingredients: selected.map(p => ({ id: p.id, name: p.name })),
+        servings: 2,
+      };
+
+      const resp = await fetch(`${API_BASE}/api/ai/recipes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || `Failed to generate recipes (${resp.status})`);
+      }
+
+      const json = await resp.json();
+      const recipes: Recipe[] = Array.isArray(json.recipes) ? json.recipes : [];
+
+      if (!recipes.length) {
+        toast.error("AI didn't return any recipes. Try different ingredients.");
+        return;
+      }
+
+      setGeneratedRecipes(recipes);
+      setShowRecipes(true);
+      toast.success("Meal generated!");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to generate recipes");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleAddRecipeToMealPlan = (recipe: Recipe) => {
@@ -233,10 +265,10 @@ export default function MyPantry() {
               onClick={handleGenerateMeal}
               size="lg"
               className="px-8 py-3 text-lg"
-              disabled={selectedCount === 0}
+              disabled={selectedCount === 0 || isGenerating}
             >
               <ChefHat className="h-5 w-5 mr-2" />
-              Show Recipes
+              {isGenerating ? "Generating..." : "Show Recipes"}
               {selectedCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {selectedCount} ingredients
@@ -246,11 +278,89 @@ export default function MyPantry() {
           </div>
         )}
 
-        {/* Generated Recipes */}
+        {/* Featured Generated Meal */}
         {showRecipes && generatedRecipes.length > 0 && (
           <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-3">Today's Pick</h2>
+            {(() => {
+              const recipe = generatedRecipes[0];
+              return (
+                <Card className="soft-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-xl">{recipe.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {recipe.description}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{recipe.category}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {recipe.prepTime + recipe.cookTime} min
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4" />
+                        {recipe.difficulty}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Calories:</span>
+                        <span className="font-medium">{recipe.nutrition.calories}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Protein:</span>
+                        <span className="font-medium">{recipe.nutrition.protein}g</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Carbs:</span>
+                        <span className="font-medium">{recipe.nutrition.carbs}g</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fat:</span>
+                        <span className="font-medium">{recipe.nutrition.fat}g</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleViewRecipeDetails(recipe)}
+                      >
+                        View Details
+                      </Button>
+                      <Button 
+                        className="flex-1" 
+                        variant="hero"
+                        onClick={() => handleAddRecipeToMealPlan(recipe)}
+                      >
+                        <ChefHat className="h-4 w-4 mr-2" />
+                        Add to Dashboard
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* More Ideas */}
+        {showRecipes && generatedRecipes.length > 1 && (
+          <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Generated Recipes</h2>
+              <h2 className="text-2xl font-bold">More ideas</h2>
               <Button
                 variant="outline"
                 onClick={() => setShowRecipes(false)}
@@ -260,7 +370,7 @@ export default function MyPantry() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {generatedRecipes.map((recipe) => (
+              {generatedRecipes.slice(1).map((recipe) => (
                 <Card key={recipe.id} className="soft-shadow cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleViewRecipeDetails(recipe)}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
