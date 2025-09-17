@@ -66,9 +66,10 @@ export function AddMealsDialog({ open, onOpenChange, onAddMeal, filterTime }: Ad
         }));
         setDbMeals(mapped);
       } catch (e: any) {
-        console.error("Failed to load meals:", e);
-        // Don't show error toast since we have fallback data
-        // toast.error("Failed to load meals", { description: e.message ?? String(e) });
+        console.error("Error loading meals:", e);
+        toast.error("Failed to load meals", { 
+          description: e.message ?? e.details ?? String(e) 
+        });
       } finally {
         setIsLoading(false);
       }
