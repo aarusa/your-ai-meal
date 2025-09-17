@@ -12,6 +12,7 @@ import RecipeDetail from "./pages/RecipeDetail";
 import MyPantry from "./pages/MyPantry";
 import GenerateMealPlan from "./pages/GenerateMealPlan";
 import Profile from "./pages/Profile";
+import DebugPage from "./pages/Debug";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import AuthGuard from "./components/AuthGuard";
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/register" element={<Register />} />
           <Route path="/index2" element={<AuthGuard><IndexBackup /></AuthGuard>} />
+          <Route path="/debug" element={<AuthGuard><DebugPage /></AuthGuard>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -69,6 +69,20 @@ export function SearchResults({ results, query, onClose, onSelectProduct }: Sear
                     <span>P: {product.protein}g</span>
                     <span>C: {product.carbs}g</span>
                     <span>F: {product.fat}g</span>
+                    {product.nutriscore_grade && (
+                      <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        {product.nutriscore_grade}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Show dietary restrictions */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {product.is_vegan && <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">Vegan</span>}
+                    {product.is_vegetarian && <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">Vegetarian</span>}
+                    {product.is_gluten_free && <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">GF</span>}
+                    {product.is_halal && <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Halal</span>}
+                    {product.is_kosher && <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Kosher</span>}
                   </div>
                 </div>
               </div>

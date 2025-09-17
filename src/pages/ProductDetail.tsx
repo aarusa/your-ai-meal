@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Flame, Zap, Droplets, Target, Plus, Minus } from "lucide-react";
-import { getProductById, Product } from "@/data/products";
+import { getProductById as getDbProductById, convertDbProductToProduct, DbProduct } from "@/integrations/supabase/queries";
+import { Product } from "@/data/products";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
 import { toast } from "sonner";
@@ -19,15 +20,25 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    if (productId) {
-      const foundProduct = getProductById(productId);
-      if (foundProduct) {
-        setProduct(foundProduct);
-      } else {
-        // Product not found, redirect to home
-        navigate("/");
+    const loadProduct = async () => {
+      if (productId) {
+        try {
+          const dbProduct = await getDbProductById(productId);
+          if (dbProduct) {
+            const convertedProduct = convertDbProductToProduct(dbProduct);
+            setProduct(convertedProduct);
+          } else {
+            // Product not found, redirect to home
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error loading product:", error);
+          navigate("/");
+        }
       }
-    }
+    };
+    
+    loadProduct();
   }, [productId, navigate]);
 
   if (!product) {

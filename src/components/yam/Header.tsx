@@ -6,7 +6,8 @@ import { Search, Bell, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { searchProducts, Product } from "@/data/products";
+import { searchProducts as searchDbProducts, convertDbProductToProduct, DbProduct, testProductsExist, getAllProducts } from "@/integrations/supabase/queries";
+import { Product } from "@/data/products";
 import { SearchResults } from "./SearchResults";
 
 export function DashboardHeader() {
@@ -31,19 +32,39 @@ export function DashboardHeader() {
         const ch = source.trim().charAt(0).toUpperCase();
         setInitial(ch);
       }
+      
+      // Test if products exist in database
+      const productsExist = await testProductsExist();
+      console.log("Products exist in database:", productsExist);
+      
+      // Get all products for debugging
+      const allProducts = await getAllProducts();
+      console.log("All products in database:", allProducts);
     };
     load();
   }, []);
 
   // Handle search input changes
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     
+    console.log("Search query changed:", query);
+    
     if (query.trim().length > 0) {
-      const results = searchProducts(query);
-      setSearchResults(results);
-      setShowResults(true);
+      try {
+        console.log("Searching database for:", query);
+        const dbResults = await searchDbProducts(query);
+        console.log("Database results:", dbResults);
+        const convertedResults = dbResults.map(convertDbProductToProduct);
+        console.log("Converted results:", convertedResults);
+        setSearchResults(convertedResults);
+        setShowResults(true);
+      } catch (error) {
+        console.error("Error searching products:", error);
+        setSearchResults([]);
+        setShowResults(false);
+      }
     } else {
       setSearchResults([]);
       setShowResults(false);

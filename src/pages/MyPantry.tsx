@@ -79,16 +79,6 @@ export default function MyPantry() {
       <DashboardHeader />
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/")} 
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
-
         {/* Page Title */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">

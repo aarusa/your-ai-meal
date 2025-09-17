@@ -276,6 +276,150 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          id: string
+          external_id: string | null
+          external_source: string | null
+          name: string
+          brand: string | null
+          description: string | null
+          category: string | null
+          subcategory: string | null
+          barcode: string | null
+          image_url: string | null
+          image_urls: string[] | null
+          thumbnail_url: string | null
+          calories_per_100g: number | null
+          energy_kcal_100g: number | null
+          protein_per_100g: number | null
+          carbs_per_100g: number | null
+          carbohydrates_100g: number | null
+          fats_per_100g: number | null
+          fiber_per_100g: number | null
+          sugar_per_100g: number | null
+          sodium_per_100g: number | null
+          salt_100g: number | null
+          saturated_fat_per_100g: number | null
+          trans_fat_per_100g: number | null
+          cholesterol_per_100g: number | null
+          is_halal: boolean
+          is_vegan: boolean
+          is_vegetarian: boolean
+          is_kosher: boolean
+          is_gluten_free: boolean
+          is_dairy_free: boolean
+          is_nut_free: boolean
+          is_soy_free: boolean
+          is_shellfish_free: boolean
+          is_egg_free: boolean
+          is_fish_free: boolean
+          is_palm_oil_free: boolean
+          common_units: string[] | null
+          serving_size_grams: number | null
+          nutriscore_grade: string | null
+          search_keywords: string[] | null
+          ai_tags: string[] | null
+          created_at: string | null
+          updated_at: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          external_id?: string | null
+          external_source?: string | null
+          name: string
+          brand?: string | null
+          description?: string | null
+          category?: string | null
+          subcategory?: string | null
+          barcode?: string | null
+          image_url?: string | null
+          image_urls?: string[] | null
+          thumbnail_url?: string | null
+          calories_per_100g?: number | null
+          energy_kcal_100g?: number | null
+          protein_per_100g?: number | null
+          carbs_per_100g?: number | null
+          carbohydrates_100g?: number | null
+          fats_per_100g?: number | null
+          fiber_per_100g?: number | null
+          sugar_per_100g?: number | null
+          sodium_per_100g?: number | null
+          salt_100g?: number | null
+          saturated_fat_per_100g?: number | null
+          trans_fat_per_100g?: number | null
+          cholesterol_per_100g?: number | null
+          is_halal?: boolean
+          is_vegan?: boolean
+          is_vegetarian?: boolean
+          is_kosher?: boolean
+          is_gluten_free?: boolean
+          is_dairy_free?: boolean
+          is_nut_free?: boolean
+          is_soy_free?: boolean
+          is_shellfish_free?: boolean
+          is_egg_free?: boolean
+          is_fish_free?: boolean
+          is_palm_oil_free?: boolean
+          common_units?: string[] | null
+          serving_size_grams?: number | null
+          nutriscore_grade?: string | null
+          search_keywords?: string[] | null
+          ai_tags?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          external_id?: string | null
+          external_source?: string | null
+          name?: string
+          brand?: string | null
+          description?: string | null
+          category?: string | null
+          subcategory?: string | null
+          barcode?: string | null
+          image_url?: string | null
+          image_urls?: string[] | null
+          thumbnail_url?: string | null
+          calories_per_100g?: number | null
+          energy_kcal_100g?: number | null
+          protein_per_100g?: number | null
+          carbs_per_100g?: number | null
+          carbohydrates_100g?: number | null
+          fats_per_100g?: number | null
+          fiber_per_100g?: number | null
+          sugar_per_100g?: number | null
+          sodium_per_100g?: number | null
+          salt_100g?: number | null
+          saturated_fat_per_100g?: number | null
+          trans_fat_per_100g?: number | null
+          cholesterol_per_100g?: number | null
+          is_halal?: boolean
+          is_vegan?: boolean
+          is_vegetarian?: boolean
+          is_kosher?: boolean
+          is_gluten_free?: boolean
+          is_dairy_free?: boolean
+          is_nut_free?: boolean
+          is_soy_free?: boolean
+          is_shellfish_free?: boolean
+          is_egg_free?: boolean
+          is_fish_free?: boolean
+          is_palm_oil_free?: boolean
+          common_units?: string[] | null
+          serving_size_grams?: number | null
+          nutriscore_grade?: string | null
+          search_keywords?: string[] | null
+          ai_tags?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       recipe_steps: {
         Row: {
           id: number
