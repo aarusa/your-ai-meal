@@ -13,6 +13,7 @@ import MyPantry from "./pages/MyPantry";
 import GenerateMealPlan from "./pages/GenerateMealPlan";
 import Profile from "./pages/Profile";
 import DebugPage from "./pages/Debug";
+import UserGeneratedMeals from "./pages/UserGeneratedMeals";
 import Auth from "./pages/Auth";
 import Register from "./pages/Register";
 import AuthGuard from "./components/AuthGuard";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/product/:productId" element={<AuthGuard><ProductDetail /></AuthGuard>} />
           <Route path="/recipe/:recipeId" element={<AuthGuard><RecipeDetail /></AuthGuard>} />
           <Route path="/pantry" element={<AuthGuard><MyPantry /></AuthGuard>} />
+          <Route path="/meals" element={<AuthGuard><UserGeneratedMeals /></AuthGuard>} />
           <Route path="/plan" element={<AuthGuard><GenerateMealPlan /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/auth" element={<Auth />} />

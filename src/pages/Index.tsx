@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Droplets, Utensils, BookOpen, Camera } from "lucide-react";
+import { Droplets, Utensils, BookOpen, ChefHat } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { RightPanel } from "@/components/yam/RightPanel";
 import { MenuGrid } from "@/components/yam/MenuGrid";
@@ -101,18 +101,7 @@ const Index = () => {
       <main className="container max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-x-hidden">
         <section className="lg:col-span-8 space-y-6">
           {/* Quick actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="group cursor-pointer hover:shadow-md transition">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center">
-                  <Camera className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="font-semibold">Scan a meal</div>
-                  <div className="text-xs text-muted-foreground">Analyze from photo</div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="group cursor-pointer hover:shadow-md transition" onClick={() => navigate('/pantry')}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center">
@@ -121,6 +110,17 @@ const Index = () => {
                 <div>
                   <div className="font-semibold">My Pantry</div>
                   <div className="text-xs text-muted-foreground">Manage your ingredients</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="group cursor-pointer hover:shadow-md transition" onClick={() => navigate('/meals')}>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-md bg-primary/10 text-primary grid place-items-center">
+                  <ChefHat className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-semibold">My Meals</div>
+                  <div className="text-xs text-muted-foreground">View generated meals</div>
                 </div>
               </CardContent>
             </Card>

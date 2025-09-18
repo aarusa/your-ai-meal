@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { YamLogo } from "./Logo";
-import { Search, Bell, Sparkles } from "lucide-react";
+import { Search, Bell, Sparkles, ChefHat } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -121,6 +121,16 @@ export function DashboardHeader() {
             />
           )}
         </div>
+
+        <Button 
+          variant="outline" 
+          className="hidden sm:inline-flex" 
+          aria-label="My Meals"
+          onClick={() => navigate("/meals")}
+        >
+          <ChefHat className="h-4 w-4" />
+          My Meals
+        </Button>
 
         <Button 
           variant="hero" 

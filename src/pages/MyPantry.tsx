@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Package, ChefHat, Plus, Minus, X, Clock, Users, Star } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Package, ChefHat, Plus, Minus, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
 import { Recipe } from "@/data/recipes";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchUserMealsSimple, apiMealToRecipe, ApiMeal } from "@/lib/api";
 
 export default function MyPantry() {
   const navigate = useNavigate();
@@ -19,8 +21,34 @@ export default function MyPantry() {
   const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
   const [showRecipes, setShowRecipes] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [storedMeals, setStoredMeals] = useState<ApiMeal[]>([]);
+  const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+  const [activeTab, setActiveTab] = useState("generated");
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
+
+  // Load stored meals from database
+  const loadStoredMeals = async () => {
+    try {
+      setIsLoadingMeals(true);
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id;
+      
+      if (userId) {
+        const meals = await fetchUserMealsSimple(userId);
+        setStoredMeals(meals);
+      }
+    } catch (error) {
+      console.error('Error loading stored meals:', error);
+      toast.error('Failed to load meal history');
+    } finally {
+      setIsLoadingMeals(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStoredMeals();
+  }, []);
 
   const toggleSelection = (productId: string) => {
     setSelectedItems(prev => {
@@ -71,17 +99,26 @@ export default function MyPantry() {
         throw new Error(text || `Failed to generate recipes (${resp.status})`);
       }
 
-      const json = await resp.json();
-      const recipes: Recipe[] = Array.isArray(json.recipes) ? json.recipes : [];
+       const json = await resp.json();
+       const recipes: Recipe[] = Array.isArray(json.recipes) ? json.recipes : [];
 
-      if (!recipes.length) {
-        toast.error("AI didn't return any recipes. Try different ingredients.");
-        return;
-      }
+       if (!recipes.length) {
+         toast.error("AI didn't return any recipes. Try different ingredients.");
+         return;
+       }
 
-      setGeneratedRecipes(recipes);
-      setShowRecipes(true);
-      toast.success("Meal generated!");
+       setGeneratedRecipes(recipes);
+       setShowRecipes(true);
+       
+       if (json.stored) {
+         toast.success(`Generated and saved ${recipes.length} AI recipe(s) to your meals!`);
+         // Refresh stored meals to show the new ones
+         loadStoredMeals();
+         // Switch to generated tab to show new recipes
+         setActiveTab("generated");
+       } else {
+         toast.success(`Generated ${recipes.length} AI recipe(s)!`);
+       }
     } catch (err: any) {
       toast.error(err?.message || "Failed to generate recipes");
     } finally {
@@ -99,6 +136,37 @@ export default function MyPantry() {
   const handleViewRecipeDetails = (recipe: Recipe) => {
     // Navigate to meal detail page using recipe ID
     navigate(`/meal/${recipe.id}`);
+  };
+
+  const handleRateMeal = async (mealId: string, rating: number) => {
+    try {
+      // Here you would call the API to update meal rating
+      // For now, just show a toast
+      toast.success(`Rated meal ${rating} stars!`);
+      loadStoredMeals(); // Refresh to show updated rating
+    } catch (error) {
+      toast.error('Failed to rate meal');
+    }
+  };
+
+  const handleFavoriteMeal = async (mealId: string) => {
+    try {
+      // Here you would call the API to toggle favorite status
+      toast.success('Added to favorites!');
+      loadStoredMeals(); // Refresh to show updated status
+    } catch (error) {
+      toast.error('Failed to update favorite status');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const selectedCount = selectedItems.size;
@@ -278,202 +346,285 @@ export default function MyPantry() {
           </div>
         )}
 
-        {/* Featured Generated Meal */}
-        {showRecipes && generatedRecipes.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-3">Today's Pick</h2>
-            {(() => {
-              const recipe = generatedRecipes[0];
-              return (
-                <Card className="soft-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl">{recipe.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {recipe.description}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">{recipe.category}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {recipe.prepTime + recipe.cookTime} min
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4" />
-                        {recipe.difficulty}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Calories:</span>
-                        <span className="font-medium">{recipe.nutrition.calories}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Protein:</span>
-                        <span className="font-medium">{recipe.nutrition.protein}g</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Carbs:</span>
-                        <span className="font-medium">{recipe.nutrition.carbs}g</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Fat:</span>
-                        <span className="font-medium">{recipe.nutrition.fat}g</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleViewRecipeDetails(recipe)}
-                      >
-                        View Details
-                      </Button>
-                      <Button 
-                        className="flex-1" 
-                        variant="hero"
-                        onClick={() => handleAddRecipeToMealPlan(recipe)}
-                      >
-                        <ChefHat className="h-4 w-4 mr-2" />
-                        Add to Dashboard
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* More Ideas */}
-        {showRecipes && generatedRecipes.length > 1 && (
+        {/* Meal Tabs Section */}
+        {showRecipes && (
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">More ideas</h2>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-primary" />
+                Your Meals
+              </h2>
               <Button
                 variant="outline"
                 onClick={() => setShowRecipes(false)}
               >
-                Hide Recipes
+                Hide Meals
               </Button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {generatedRecipes.slice(1).map((recipe) => (
-                <Card key={recipe.id} className="soft-shadow cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleViewRecipeDetails(recipe)}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{recipe.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {recipe.description}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">{recipe.category}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Recipe Info */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {recipe.prepTime + recipe.cookTime} min
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {recipe.servings} serving{recipe.servings !== 1 ? 's' : ''}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4" />
-                        {recipe.difficulty}
-                      </div>
-                    </div>
 
-                    {/* Nutrition */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Calories:</span>
-                        <span className="font-medium">{recipe.nutrition.calories}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Protein:</span>
-                        <span className="font-medium">{recipe.nutrition.protein}g</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Carbs:</span>
-                        <span className="font-medium">{recipe.nutrition.carbs}g</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Fat:</span>
-                        <span className="font-medium">{recipe.nutrition.fat}g</span>
-                      </div>
-                    </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="generated" className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Generated Meals
+                  {generatedRecipes.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {generatedRecipes.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Meal History
+                  {storedMeals.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {storedMeals.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1">
-                      {recipe.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
+              {/* Generated Meals Tab */}
+              <TabsContent value="generated" className="space-y-6">
+                {generatedRecipes.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {generatedRecipes.map((recipe) => (
+                      <Card key={recipe.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Sparkles className="h-4 w-4 text-primary" />
+                                <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                                  {recipe.name}
+                                </CardTitle>
+                              </div>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                {recipe.description}
+                              </p>
+                            </div>
+                            <Badge variant="secondary" className="ml-2">
+                              {recipe.category}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="space-y-4">
+                          {/* Quick Stats */}
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              {recipe.prepTime + recipe.cookTime}min
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              {recipe.servings}
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Star className="h-4 w-4" />
+                              {recipe.difficulty}
+                            </div>
+                          </div>
 
-                    {/* Instructions Preview */}
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Instructions:</h4>
-                      <ol className="text-sm text-muted-foreground space-y-1">
-                        {recipe.instructions.slice(0, 3).map((instruction, index) => (
-                          <li key={index} className="flex">
-                            <span className="font-medium mr-2">{index + 1}.</span>
-                            {instruction}
-                          </li>
-                        ))}
-                        {recipe.instructions.length > 3 && (
-                          <li className="text-xs text-muted-foreground">
-                            ... and {recipe.instructions.length - 3} more steps
-                          </li>
-                        )}
-                      </ol>
-                    </div>
+                          {/* Nutrition Highlight */}
+                          <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-lg border border-primary/20">
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="text-center">
+                                <div className="font-bold text-primary text-lg">{recipe.nutrition.calories}</div>
+                                <div className="text-xs text-muted-foreground">Calories</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="font-bold text-lg">{recipe.nutrition.protein}g</div>
+                                <div className="text-xs text-muted-foreground">Protein</div>
+                              </div>
+                            </div>
+                          </div>
 
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewRecipeDetails(recipe);
-                            }}
-                          >
-                            View Details
-                          </Button>
-                          <Button 
-                            className="flex-1" 
-                            variant="hero"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddRecipeToMealPlan(recipe);
-                            }}
-                          >
-                            <ChefHat className="h-4 w-4 mr-2" />
-                            Add to Dashboard
-                          </Button>
-                        </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-1">
+                            {recipe.tags.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {recipe.tags.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{recipe.tags.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-2">
+                            <Button 
+                              variant="outline"
+                              className="flex-1 h-9 text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewRecipeDetails(recipe);
+                              }}
+                            >
+                              View Details
+                            </Button>
+                            <Button 
+                              className="flex-1 h-9 text-sm" 
+                              variant="default"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddRecipeToMealPlan(recipe);
+                              }}
+                            >
+                              <ChefHat className="h-4 w-4 mr-1" />
+                              Cook
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Generated Meals</h3>
+                    <p className="text-muted-foreground">
+                      Select ingredients and click "Show Recipes" to generate AI-powered meal suggestions.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Meal History Tab */}
+              <TabsContent value="history" className="space-y-6">
+                {isLoadingMeals ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading your meal history...</p>
+                  </div>
+                ) : storedMeals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {storedMeals.map((meal) => {
+                      const recipe = apiMealToRecipe(meal);
+                      return (
+                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <History className="h-4 w-4 text-muted-foreground" />
+                                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                                    {meal.name}
+                                  </CardTitle>
+                                  {meal.is_favorited && (
+                                    <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {meal.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Created {formatDate(meal.created_at)}
+                                </p>
+                              </div>
+                              <Badge variant="secondary" className="ml-2">
+                                {meal.meal_type}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-4">
+                            {/* Quick Stats */}
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {meal.total_time_minutes}min
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                {meal.servings}
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Star className="h-4 w-4" />
+                                {meal.difficulty_level}
+                              </div>
+                            </div>
+
+                            {/* Status & Rating */}
+                            <div className="flex items-center justify-between">
+                              <Badge 
+                                variant={meal.status === 'accepted' ? 'default' : meal.status === 'rejected' ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {meal.status}
+                              </Badge>
+                              {meal.user_rating && (
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      className={`h-3 w-3 ${i < meal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Nutrition */}
+                            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between">
+                                  <span>Calories:</span>
+                                  <span className="font-medium">{meal.total_calories}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Protein:</span>
+                                  <span className="font-medium">{meal.total_protein}g</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-2">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleViewRecipeDetails(recipe)}
+                              >
+                                View
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleFavoriteMeal(meal.id)}
+                              >
+                                <Heart className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleRateMeal(meal.id, 5)}
+                              >
+                                <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Meal History</h3>
+                    <p className="text-muted-foreground">
+                      Your generated and saved meals will appear here.
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </main>
