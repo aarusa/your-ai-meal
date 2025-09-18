@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import RecipeDetail from "./pages/RecipeDetail";
 import MyPantry from "./pages/MyPantry";
 import GenerateMealPlan from "./pages/GenerateMealPlan";
+import PlanTest from "./pages/PlanTest";
 import Profile from "./pages/Profile";
 import DebugPage from "./pages/Debug";
 import UserGeneratedMeals from "./pages/UserGeneratedMeals";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/pantry" element={<AuthGuard><MyPantry /></AuthGuard>} />
           <Route path="/meals" element={<AuthGuard><UserGeneratedMeals /></AuthGuard>} />
           <Route path="/plan" element={<AuthGuard><GenerateMealPlan /></AuthGuard>} />
+          <Route path="/plan-test" element={<AuthGuard><PlanTest /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/register" element={<Register />} />

@@ -42,7 +42,7 @@ export interface AIRecipe {
 
 export async function generateAIRecipe(request: GenerateAIRecipeRequest): Promise<AIRecipe[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/ai/recipes`, {
+    const response = await fetch(`${API_BASE}/api/ai/plan`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,6 +58,36 @@ export async function generateAIRecipe(request: GenerateAIRecipeRequest): Promis
     return data.recipes || [];
   } catch (error) {
     console.error('Error generating AI recipe:', error);
+    throw error;
+  }
+}
+
+// Store a meal generation request (plan form parameters)
+export interface StoreMealGenerationRequestPayload {
+  userId?: string;
+  calories?: number;
+  protein?: number;
+  mealType?: string;
+  cookTime?: number;
+  servings?: number;
+  dietaryPreferences?: string[];
+  allergies?: string[];
+  favoriteCuisines?: string[];
+}
+
+export async function storeMealGenerationRequest(payload: StoreMealGenerationRequestPayload): Promise<{ request: any }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/ai/requests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to store generation request: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error storing meal generation request:', error);
     throw error;
   }
 }

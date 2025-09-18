@@ -10,7 +10,7 @@ import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, S
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePantry } from "@/contexts/PantryContext";
-import { generateAIRecipe, GenerateAIRecipeRequest, AIRecipe } from "@/lib/api";
+import { generateAIRecipe, GenerateAIRecipeRequest, AIRecipe, storeMealGenerationRequest } from "@/lib/api";
 
 // Options will be loaded from database with safe fallbacks
 
@@ -27,6 +27,8 @@ export default function GenerateMealPlan() {
   const [allergies, setAllergies] = useState<string[]>([]);
   const [dietaryOptions, setDietaryOptions] = useState<string[]>(["Vegetarian","Vegan","Keto","Paleo","Halal","Gluten-free"]);
   const [allergyOptions, setAllergyOptions] = useState<string[]>(["Nuts","Dairy","Gluten","Eggs","Shellfish","Soy"]);
+  const [cuisineOptions, setCuisineOptions] = useState<string[]>([]);
+  const [favoriteCuisines, setFavoriteCuisines] = useState<string[]>([]);
   const [selectedPantry, setSelectedPantry] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedRecipes, setGeneratedRecipes] = useState<AIRecipe[]>([]);
@@ -48,15 +50,10 @@ export default function GenerateMealPlan() {
     try {
       setIsGenerating(true);
       
-      // Get selected pantry items
+      // Get selected pantry items (optional)
       const selectedIngredients = pantryItems
         .filter(item => selectedPantry.has(item.id))
         .map(item => item.name);
-
-      if (selectedIngredients.length === 0) {
-        toast.error("Please select at least one ingredient from your pantry");
-        return;
-      }
 
       // Get user preferences from Supabase
       const { data } = await supabase.auth.getUser();
@@ -71,12 +68,31 @@ export default function GenerateMealPlan() {
         ingredients: selectedIngredients,
         dietaryPreferences: dietaryPrefs,
         allergies: allergies,
+        favoriteCuisines: favoriteCuisines,
         calories: calories,
         protein: protein,
         mealType: mealType.toLowerCase(),
         cookTime: cookTime,
         servings: servings,
       };
+
+      // Store user-entered parameters
+      try {
+        await storeMealGenerationRequest({
+          userId,
+          calories,
+          protein,
+          mealType: mealType.toLowerCase(),
+          cookTime,
+          servings,
+          dietaryPreferences: dietaryPrefs,
+          allergies,
+          favoriteCuisines,
+        });
+      } catch (e) {
+        // Non-blocking: log but continue generation
+        console.warn('Failed to store generation request:', e);
+      }
 
       // Generate AI recipes
       const recipes = await generateAIRecipe(request);
@@ -107,8 +123,11 @@ export default function GenerateMealPlan() {
         const { data: dp, error: dpe } = await supabase.from("dietary_preferences").select("name");
         if (!dpe && dp && dp.length > 0) setDietaryOptions(dp.map((r: any) => r.name));
 
-        const { data: ao, error: aoe } = await supabase.from("allergy_options").select("name");
+        const { data: ao, error: aoe } = await supabase.from("allergies").select("name");
         if (!aoe && ao && ao.length > 0) setAllergyOptions(ao.map((r: any) => r.name));
+
+        const { data: cu, error: cue } = await supabase.from("cuisines").select("name");
+        if (!cue && cu && cu.length > 0) setCuisineOptions(cu.map((r: any) => r.name));
       } catch (e) {
         // keep defaults silently
       }
@@ -211,6 +230,27 @@ export default function GenerateMealPlan() {
 
             <Separator />
 
+              <section>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Leaf className="h-4 w-4 text-primary" />
+                  Cuisine Preferences
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {cuisineOptions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Loading cuisines…</p>
+                  ) : (
+                    cuisineOptions.map(opt => (
+                      <Button key={opt} variant={favoriteCuisines.includes(opt) ? "default" : "outline"}
+                        onClick={() => toggleInList(opt, favoriteCuisines, setFavoriteCuisines)}>
+                        {opt}
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <Separator />
+
             <section>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-primary" />
@@ -257,7 +297,7 @@ export default function GenerateMealPlan() {
                 size="lg" 
                 className="px-8" 
                 onClick={handleGenerate} 
-                disabled={isGenerating || selectedPantry.size === 0}
+                disabled={isGenerating}
                 aria-label="Generate meal plan with AI"
               >
                 {isGenerating ? (
@@ -272,11 +312,9 @@ export default function GenerateMealPlan() {
                   </>
                 )}
               </Button>
-              {selectedPantry.size === 0 && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Please select ingredients from your pantry to generate meals
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground mt-2">
+                Pantry items are optional. AI will consider calories, protein, meal type, preferences, dietary preferences, and allergies.
+              </p>
             </div>
           </CardContent>
         </Card>
