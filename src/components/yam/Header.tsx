@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { YamLogo } from "./Logo";
-import { Search, Sparkles, ChefHat, BookOpen } from "lucide-react";
+import { Search, Sparkles, ChefHat, BookOpen, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ export function DashboardHeader() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +81,12 @@ export function DashboardHeader() {
     setShowResults(false);
   };
 
+  // Handle mobile menu navigation
+  const handleMobileMenuNavigation = (path: string) => {
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
+
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -122,43 +129,120 @@ export function DashboardHeader() {
           )}
         </div>
 
-        <Button 
-          variant="outline" 
-          className="hidden sm:inline-flex" 
-          aria-label="My Pantry"
-          onClick={() => navigate("/pantry")}
-        >
-          <BookOpen className="h-4 w-4" />
-          My Pantry
-        </Button>
+        {/* Desktop Navigation */}
+        <div className="hidden sm:flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            aria-label="My Pantry"
+            onClick={() => navigate("/pantry")}
+          >
+            <BookOpen className="h-4 w-4" />
+            My Pantry
+          </Button>
 
-        <Button 
-          variant="outline" 
-          className="hidden sm:inline-flex" 
-          aria-label="My Meals"
-          onClick={() => navigate("/meals")}
-        >
-          <ChefHat className="h-4 w-4" />
-          My Meals
-        </Button>
+          <Button 
+            variant="outline" 
+            aria-label="My Meals"
+            onClick={() => navigate("/meals")}
+          >
+            <ChefHat className="h-4 w-4" />
+            My Meals
+          </Button>
 
-        <Button 
-          variant="hero" 
-          className="hidden sm:inline-flex" 
-          aria-label="Generate AI Meals"
-          onClick={() => navigate("/plan")}
-        >
-          <Sparkles className="h-4 w-4" />
-          Generate AI Meals
-        </Button>
+          <Button 
+            variant="hero" 
+            aria-label="Generate AI Meals"
+            onClick={() => navigate("/plan")}
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate AI Meals
+          </Button>
+        </div>
 
+        {/* Desktop Profile Avatar */}
         <Avatar 
-          className="cursor-pointer" 
+          className="cursor-pointer hidden sm:flex" 
           onClick={() => navigate("/profile")}
         >
           <AvatarFallback>{initial}</AvatarFallback>
         </Avatar>
+
+        {/* Mobile Menu Button (replaces profile icon) */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="sm:hidden"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Menu Box */}
+          <div className="absolute top-full right-4 left-4 mt-2 z-50">
+            <div className="bg-background border border-border rounded-xl shadow-2xl backdrop-blur-md bg-background/95">
+              {/* Menu Header */}
+              <div className="px-4 py-3 border-b border-border/50">
+                <h3 className="text-sm font-semibold text-muted-foreground">Navigation</h3>
+              </div>
+              
+              {/* Menu Items */}
+              <div className="p-2 space-y-1">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start h-12 px-4 hover:bg-accent/50"
+                  onClick={() => handleMobileMenuNavigation("/pantry")}
+                >
+                  <BookOpen className="h-4 w-4 mr-3" />
+                  <span className="font-medium">My Pantry</span>
+                </Button>
+
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start h-12 px-4 hover:bg-accent/50"
+                  onClick={() => handleMobileMenuNavigation("/meals")}
+                >
+                  <ChefHat className="h-4 w-4 mr-3" />
+                  <span className="font-medium">My Meals</span>
+                </Button>
+
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start h-12 px-4 hover:bg-primary/10 hover:text-primary"
+                  onClick={() => handleMobileMenuNavigation("/plan")}
+                >
+                  <Sparkles className="h-4 w-4 mr-3" />
+                  <span className="font-medium">Generate AI Meals</span>
+                </Button>
+
+                {/* Profile Section */}
+                <div className="border-t border-border/50 my-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start h-12 px-4 hover:bg-accent/50"
+                    onClick={() => handleMobileMenuNavigation("/profile")}
+                  >
+                    <Avatar className="h-6 w-6 mr-3">
+                      <AvatarFallback className="text-xs font-medium">{initial}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">Profile</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
