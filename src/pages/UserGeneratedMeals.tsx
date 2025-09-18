@@ -281,10 +281,31 @@ export default function UserGeneratedMeals() {
 
   const handleFavoriteMeal = async (mealId: string) => {
     try {
-      // This would need to be implemented in the API
-      toast.success('Added to favorites!');
-      loadInitialData(); // Refresh data
+      // Find the current meal to get its current favorite status
+      const currentMeal = meals.find(meal => meal.id === mealId);
+      if (!currentMeal) {
+        toast.error('Meal not found');
+        return;
+      }
+
+      // Toggle the favorite status
+      const newFavoriteStatus = !currentMeal.is_favorited;
+      
+      // Update the meal status with the new favorite status
+      await updateMealStatus(mealId, currentMeal.status as 'generated' | 'accepted' | 'rejected' | 'cooked', currentMeal.user_rating, currentMeal.user_feedback, newFavoriteStatus);
+      
+      // Update local state immediately for better UX
+      setMeals(prevMeals => 
+        prevMeals.map(meal => 
+          meal.id === mealId 
+            ? { ...meal, is_favorited: newFavoriteStatus }
+            : meal
+        )
+      );
+      
+      toast.success(newFavoriteStatus ? 'Added to favorites!' : 'Removed from favorites!');
     } catch (error) {
+      console.error('Error updating favorite status:', error);
       toast.error('Failed to update favorite status');
     }
   };
@@ -577,7 +598,7 @@ export default function UserGeneratedMeals() {
                                 className="h-8 px-2"
                                 onClick={() => handleFavoriteMeal(meal.id)}
                               >
-                                <Heart className="h-3 w-3" />
+                                <Heart className={`h-3 w-3 ${meal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
                               </Button>
                               <Button 
                                 variant="outline"
@@ -729,7 +750,7 @@ export default function UserGeneratedMeals() {
                                 className="h-8 px-2"
                                 onClick={() => handleFavoriteMeal(meal.id)}
                               >
-                                <Heart className="h-3 w-3" />
+                                <Heart className={`h-3 w-3 ${meal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
                               </Button>
                               <Button 
                                 variant="outline"
@@ -878,7 +899,7 @@ export default function UserGeneratedMeals() {
                                 className="h-8 px-2"
                                 onClick={() => handleFavoriteMeal(meal.id)}
                               >
-                                <Heart className="h-3 w-3" />
+                                <Heart className={`h-3 w-3 ${meal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
                               </Button>
                               <Button 
                                 variant="outline"
@@ -1025,7 +1046,7 @@ export default function UserGeneratedMeals() {
                                 className="h-8 px-2"
                                 onClick={() => handleFavoriteMeal(meal.id)}
                               >
-                                <Heart className="h-3 w-3" />
+                                <Heart className={`h-3 w-3 ${meal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
                               </Button>
                               <Button 
                                 variant="outline"
