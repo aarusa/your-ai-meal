@@ -16,6 +16,7 @@ import {
   Star, 
   Heart, 
   ThumbsUp, 
+  ThumbsDown,
   Calendar,
   ChefHat,
   Sparkles,
@@ -70,6 +71,70 @@ export default function UserGeneratedMeals() {
   const [totalMeals, setTotalMeals] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const limit = 12;
+
+  // Filter meals based on active tab
+  const getFilteredMealsForTab = (tab: string) => {
+    let filtered = [...meals];
+    
+    // Apply tab-specific filtering
+    switch (tab) {
+      case "accepted":
+        filtered = filtered.filter(meal => meal.status === "accepted");
+        break;
+      case "rejected":
+        filtered = filtered.filter(meal => meal.status === "rejected");
+        break;
+      case "favorites":
+        filtered = filtered.filter(meal => meal.is_favorited === true);
+        break;
+      case "all":
+      default:
+        // Show all meals
+        break;
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(meal => 
+        meal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        meal.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Apply meal type filter
+    if (mealTypeFilter !== "all") {
+      filtered = filtered.filter(meal => meal.meal_type === mealTypeFilter);
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case "name":
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case "calories":
+          aValue = a.total_calories || 0;
+          bValue = b.total_calories || 0;
+          break;
+        case "created_at":
+        default:
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+      }
+      
+      if (sortOrder === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+    
+    return filtered;
+  };
 
   // Load initial data
   useEffect(() => {
@@ -262,7 +327,7 @@ export default function UserGeneratedMeals() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
       
       <main className="container max-w-6xl mx-auto px-4 py-6">
@@ -279,7 +344,7 @@ export default function UserGeneratedMeals() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 overflow-hidden">
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200 dark:border-blue-800">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -341,14 +406,14 @@ export default function UserGeneratedMeals() {
         {/* Filters and Search */}
         <div className="mb-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsList className="grid w-full grid-cols-4 mb-4 overflow-hidden">
               <TabsTrigger value="all">All Meals</TabsTrigger>
               <TabsTrigger value="accepted">Accepted</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
               <TabsTrigger value="favorites">Favorites</TabsTrigger>
             </TabsList>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-4 overflow-hidden">
               {/* Search */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -361,9 +426,9 @@ export default function UserGeneratedMeals() {
               </div>
 
               {/* Filters */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 <Select value={mealTypeFilter} onValueChange={setMealTypeFilter}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[140px] flex-shrink-0">
                     <SelectValue placeholder="Meal Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -380,7 +445,7 @@ export default function UserGeneratedMeals() {
                   setSortBy(field);
                   setSortOrder(order as "asc" | "desc");
                 }}>
-                  <SelectTrigger className="w-[160px]">
+                  <SelectTrigger className="w-[160px] flex-shrink-0">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -395,10 +460,12 @@ export default function UserGeneratedMeals() {
               </div>
             </div>
 
-            <TabsContent value={activeTab} className="space-y-6">
-              {filteredMeals.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* All Meals Tab */}
+            <TabsContent value="all" className="space-y-6">
+              {(() => {
+                const filteredMeals = getFilteredMealsForTab("all");
+                return filteredMeals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
                     {filteredMeals.map((meal) => {
                       const recipe = apiMealToRecipe(meal);
                       return (
@@ -526,29 +593,7 @@ export default function UserGeneratedMeals() {
                       );
                     })}
                   </div>
-
-                  {/* Load More Button */}
-                  {hasMore && (
-                    <div className="text-center pt-6">
-                      <Button 
-                        onClick={loadMoreMeals}
-                        disabled={isLoadingMore}
-                        variant="outline"
-                        className="px-8"
-                      >
-                        {isLoadingMore ? (
-                          <>
-                            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2"></div>
-                            Loading...
-                          </>
-                        ) : (
-                          'Load More Meals'
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              ) : (
+                ) : (
                 <div className="text-center py-12">
                   <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No Meals Found</h3>
@@ -563,7 +608,453 @@ export default function UserGeneratedMeals() {
                     Generate Some Meals
                   </Button>
                 </div>
-              )}
+              );
+              })()}
+            </TabsContent>
+
+            {/* Accepted Meals Tab */}
+            <TabsContent value="accepted" className="space-y-6">
+              {(() => {
+                const filteredMeals = getFilteredMealsForTab("accepted");
+                return filteredMeals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
+                    {filteredMeals.map((meal) => {
+                      const recipe = apiMealToRecipe(meal);
+                      return (
+                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20 overflow-hidden">
+                          {/* Meal Image */}
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={generateUnsplashFoodImage(meal.name)} 
+                              alt={meal.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                              }}
+                            />
+                            <div className="absolute top-3 right-3">
+                              <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
+                                {meal.meal_type}
+                              </Badge>
+                            </div>
+                            {meal.is_favorited && (
+                              <div className="absolute top-3 left-3">
+                                <Heart className="h-5 w-5 text-red-500 fill-red-500 bg-background/90 backdrop-blur-sm rounded-full p-1" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
+                                    {meal.name}
+                                  </CardTitle>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                  {meal.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(meal.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-4">
+                            {/* Quick Stats */}
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {meal.total_time_minutes}min
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                {meal.servings}
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Star className="h-4 w-4" />
+                                {meal.difficulty_level}
+                              </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                              <Badge className={`text-xs ${getStatusColor(meal.status)}`}>
+                                {meal.status}
+                              </Badge>
+                              {meal.user_rating && (
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      className={`h-3 w-3 ${i < meal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Nutrition */}
+                            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between">
+                                  <span>Calories:</span>
+                                  <span className="font-medium">{meal.total_calories}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Protein:</span>
+                                  <span className="font-medium">{meal.total_protein}g</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-2">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleViewMeal(meal)}
+                              >
+                                View
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleFavoriteMeal(meal.id)}
+                              >
+                                <Heart className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleRateMeal(meal.id, 5)}
+                              >
+                                <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Accepted Meals</h3>
+                    <p className="text-muted-foreground mb-4">
+                      You haven't accepted any meals yet. Try generating some meals and accept the ones you like!
+                    </p>
+                    <Button onClick={() => navigate('/pantry')} className="gap-2">
+                      <ChefHat className="h-4 w-4" />
+                      Generate Some Meals
+                    </Button>
+                  </div>
+                );
+              })()}
+            </TabsContent>
+
+            {/* Rejected Meals Tab */}
+            <TabsContent value="rejected" className="space-y-6">
+              {(() => {
+                const filteredMeals = getFilteredMealsForTab("rejected");
+                return filteredMeals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
+                    {filteredMeals.map((meal) => {
+                      const recipe = apiMealToRecipe(meal);
+                      return (
+                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20 overflow-hidden">
+                          {/* Meal Image */}
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={generateUnsplashFoodImage(meal.name)} 
+                              alt={meal.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                              }}
+                            />
+                            <div className="absolute top-3 right-3">
+                              <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
+                                {meal.meal_type}
+                              </Badge>
+                            </div>
+                            {meal.is_favorited && (
+                              <div className="absolute top-3 left-3">
+                                <Heart className="h-5 w-5 text-red-500 fill-red-500 bg-background/90 backdrop-blur-sm rounded-full p-1" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
+                                    {meal.name}
+                                  </CardTitle>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                  {meal.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(meal.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-4">
+                            {/* Quick Stats */}
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {meal.total_time_minutes}min
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                {meal.servings}
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Star className="h-4 w-4" />
+                                {meal.difficulty_level}
+                              </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                              <Badge className={`text-xs ${getStatusColor(meal.status)}`}>
+                                {meal.status}
+                              </Badge>
+                              {meal.user_rating && (
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      className={`h-3 w-3 ${i < meal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Nutrition */}
+                            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between">
+                                  <span>Calories:</span>
+                                  <span className="font-medium">{meal.total_calories}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Protein:</span>
+                                  <span className="font-medium">{meal.total_protein}g</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-2">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleViewMeal(meal)}
+                              >
+                                View
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleFavoriteMeal(meal.id)}
+                              >
+                                <Heart className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleRateMeal(meal.id, 5)}
+                              >
+                                <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <ThumbsDown className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Rejected Meals</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Great! You haven't rejected any meals yet. Keep exploring and finding meals you love!
+                    </p>
+                    <Button onClick={() => navigate('/pantry')} className="gap-2">
+                      <ChefHat className="h-4 w-4" />
+                      Generate Some Meals
+                    </Button>
+                  </div>
+                );
+              })()}
+            </TabsContent>
+
+            {/* Favorites Tab */}
+            <TabsContent value="favorites" className="space-y-6">
+              {(() => {
+                const filteredMeals = getFilteredMealsForTab("favorites");
+                return filteredMeals.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
+                    {filteredMeals.map((meal) => {
+                      const recipe = apiMealToRecipe(meal);
+                      return (
+                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20 overflow-hidden">
+                          {/* Meal Image */}
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={generateUnsplashFoodImage(meal.name)} 
+                              alt={meal.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                              }}
+                            />
+                            <div className="absolute top-3 right-3">
+                              <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
+                                {meal.meal_type}
+                              </Badge>
+                            </div>
+                            <div className="absolute top-3 left-3">
+                              <Heart className="h-5 w-5 text-red-500 fill-red-500 bg-background/90 backdrop-blur-sm rounded-full p-1" />
+                            </div>
+                          </div>
+                          
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Heart className="h-4 w-4 text-red-500" />
+                                  <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
+                                    {meal.name}
+                                  </CardTitle>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                  {meal.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(meal.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-4">
+                            {/* Quick Stats */}
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {meal.total_time_minutes}min
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Users className="h-4 w-4" />
+                                {meal.servings}
+                              </div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Star className="h-4 w-4" />
+                                {meal.difficulty_level}
+                              </div>
+                            </div>
+
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                              <Badge className={`text-xs ${getStatusColor(meal.status)}`}>
+                                {meal.status}
+                              </Badge>
+                              {meal.user_rating && (
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      className={`h-3 w-3 ${i < meal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Nutrition */}
+                            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex justify-between">
+                                  <span>Calories:</span>
+                                  <span className="font-medium">{meal.total_calories}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Protein:</span>
+                                  <span className="font-medium">{meal.total_protein}g</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 pt-2">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleViewMeal(meal)}
+                              >
+                                View
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleFavoriteMeal(meal.id)}
+                              >
+                                <Heart className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleRateMeal(meal.id, 5)}
+                              >
+                                <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Favorite Meals</h3>
+                    <p className="text-muted-foreground mb-4">
+                      You haven't favorited any meals yet. Start by generating some meals and add your favorites!
+                    </p>
+                    <Button onClick={() => navigate('/pantry')} className="gap-2">
+                      <ChefHat className="h-4 w-4" />
+                      Generate Some Meals
+                    </Button>
+                  </div>
+                );
+              })()}
             </TabsContent>
           </Tabs>
         </div>
