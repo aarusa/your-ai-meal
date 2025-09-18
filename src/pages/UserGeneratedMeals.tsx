@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ArrowLeft, 
   Search, 
   Filter, 
   SortAsc, 
@@ -254,22 +253,10 @@ export default function UserGeneratedMeals() {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       
-      <main className="container max-w-7xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-6">
             <Sparkles className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Your Generated Meals</h1>
           </div>
@@ -399,7 +386,7 @@ export default function UserGeneratedMeals() {
             <TabsContent value={activeTab} className="space-y-6">
               {filteredMeals.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredMeals.map((meal) => {
                       const recipe = apiMealToRecipe(meal);
                       return (

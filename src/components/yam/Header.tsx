@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { YamLogo } from "./Logo";
-import { Search, Bell, Sparkles, ChefHat } from "lucide-react";
+import { Search, Sparkles, ChefHat, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,6 +125,16 @@ export function DashboardHeader() {
         <Button 
           variant="outline" 
           className="hidden sm:inline-flex" 
+          aria-label="My Pantry"
+          onClick={() => navigate("/pantry")}
+        >
+          <BookOpen className="h-4 w-4" />
+          My Pantry
+        </Button>
+
+        <Button 
+          variant="outline" 
+          className="hidden sm:inline-flex" 
           aria-label="My Meals"
           onClick={() => navigate("/meals")}
         >
@@ -142,9 +152,6 @@ export function DashboardHeader() {
           Generate Meal Plan
         </Button>
 
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-5 w-5" />
-        </Button>
         <Avatar 
           className="cursor-pointer" 
           onClick={() => navigate("/profile")}
