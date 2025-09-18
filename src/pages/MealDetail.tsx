@@ -618,11 +618,11 @@ export default function MealDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
 
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container max-w-6xl mx-auto px-4 py-6">
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-x-hidden">
+        <div className="container max-w-6xl mx-auto px-4 py-6 w-full">
           {/* Hero Section */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-6">
@@ -637,7 +637,7 @@ export default function MealDetail() {
               )}
         </div>
             
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent break-words">
               {currentMeal.name || currentMeal.title}
             </h1>
             
@@ -646,7 +646,7 @@ export default function MealDetail() {
             </p>
 
             {/* Quick Stats */}
-            <div className="flex items-center justify-center gap-6 mb-8">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 mb-8 flex-wrap">
               <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                 <Clock className="h-5 w-5" />
                 <span className="font-medium">{currentMeal.cookTime}</span>
@@ -662,11 +662,11 @@ export default function MealDetail() {
             </div>
 
             {/* Main Image */}
-            <div className="relative w-full mb-8">
+            <div className="relative w-full mb-8 max-w-4xl mx-auto">
               <img 
                 src={generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
                 alt={`${currentMeal.name || currentMeal.title} recipe`}
-                className="w-full h-80 lg:h-96 object-cover rounded-3xl shadow-2xl"
+                className="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-3xl shadow-2xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`;
@@ -677,7 +677,7 @@ export default function MealDetail() {
           </div>
 
           {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 w-full">
             {/* Left Column - Ingredients */}
             <div className="lg:col-span-1">
               <div className="sticky top-8">
@@ -691,7 +691,7 @@ export default function MealDetail() {
                     return (
                       <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
                         <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-                        <span className="text-slate-700 dark:text-slate-300">{ingredientText}</span>
+                        <span className="text-slate-700 dark:text-slate-300 break-words">{ingredientText}</span>
               </div>
                     );
                   }) || []}
@@ -715,7 +715,7 @@ export default function MealDetail() {
                       <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                         {index + 1}
                       </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed pt-1">{instruction}</p>
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed pt-1 break-words">{instruction}</p>
                     </div>
                   )) || []}
                   {(!currentMeal.instructions || currentMeal.instructions.length === 0) && (
@@ -729,7 +729,7 @@ export default function MealDetail() {
             {/* Nutrition Facts */}
               <div>
                 <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">Nutrition</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
                     <div className="text-2xl font-bold text-primary mb-1">{currentMeal.nutrition?.calories || 0}</div>
                     <div className="text-sm text-slate-600 dark:text-slate-400">Calories</div>
@@ -777,7 +777,7 @@ export default function MealDetail() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     <Button 
                       variant="outline" 
                       onClick={handleToggleFavorite}

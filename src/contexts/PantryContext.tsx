@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Product } from '@/data/products';
+import { Recipe } from '@/data/recipes';
+import { AIRecipe } from '@/lib/api';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PantryItem extends Product {
@@ -13,12 +15,17 @@ interface PantryContextType {
   removeFromPantry: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearPantry: () => void;
+  generatedMeals: (Recipe | AIRecipe)[];
+  addGeneratedMeals: (meals: Recipe[] | AIRecipe[]) => void;
+  replaceGeneratedMeals: (meals: Recipe[] | AIRecipe[]) => void;
+  clearGeneratedMeals: () => void;
 }
 
 const PantryContext = createContext<PantryContextType | undefined>(undefined);
 
 export function PantryProvider({ children }: { children: ReactNode }) {
   const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
+  const [generatedMeals, setGeneratedMeals] = useState<(Recipe | AIRecipe)[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
@@ -144,6 +151,18 @@ export function PantryProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addGeneratedMeals = (meals: Recipe[] | AIRecipe[]) => {
+    setGeneratedMeals(prev => [...prev, ...meals]);
+  };
+
+  const replaceGeneratedMeals = (meals: Recipe[] | AIRecipe[]) => {
+    setGeneratedMeals(meals);
+  };
+
+  const clearGeneratedMeals = () => {
+    setGeneratedMeals([]);
+  };
+
   return (
     <PantryContext.Provider
       value={{
@@ -152,6 +171,10 @@ export function PantryProvider({ children }: { children: ReactNode }) {
         removeFromPantry,
         updateQuantity,
         clearPantry,
+        generatedMeals,
+        addGeneratedMeals,
+        replaceGeneratedMeals,
+        clearGeneratedMeals,
       }}
     >
       {children}

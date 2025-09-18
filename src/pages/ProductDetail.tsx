@@ -17,7 +17,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addToPantry } = usePantry();
   const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  // Quantity/servings removed per requirement
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -48,21 +48,18 @@ export default function ProductDetail() {
         <div className="container max-w-6xl mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-muted-foreground">Product not found</h1>
-            <Button onClick={() => navigate("/")} className="mt-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
+            
           </div>
         </div>
       </div>
     );
   }
 
-  // Calculate nutritional values based on quantity
-  const totalCalories = Math.round(product.calories * quantity);
-  const totalProtein = Math.round(product.protein * quantity * 10) / 10;
-  const totalCarbs = Math.round(product.carbs * quantity * 10) / 10;
-  const totalFat = Math.round(product.fat * quantity * 10) / 10;
+  // Simple totals without servings multiplier
+  const totalCalories = Math.round(product.calories);
+  const totalProtein = Math.round(product.protein * 10) / 10;
+  const totalCarbs = Math.round(product.carbs * 10) / 10;
+  const totalFat = Math.round(product.fat * 10) / 10;
 
   // Calculate macro percentages
   const totalMacroKcal = (totalCarbs * 4) + (totalProtein * 4) + (totalFat * 9);
@@ -72,8 +69,8 @@ export default function ProductDetail() {
 
   const handleAddToPantry = () => {
     if (product) {
-      addToPantry(product, quantity);
-      toast.success(`Added ${quantity} serving(s) of ${product.name} to your pantry!`);
+      addToPantry(product, 1);
+      toast.success(`Added ${product.name} to your pantry!`);
     }
   };
 
@@ -82,15 +79,6 @@ export default function ProductDetail() {
       <DashboardHeader />
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Back button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/")} 
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Product Info */}
@@ -100,11 +88,26 @@ export default function ProductDetail() {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-2xl mb-2">{product.name}</CardTitle>
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Badge variant="secondary">{product.category}</Badge>
                       <span className="text-sm text-muted-foreground">
-                        {product.calories} kcal per serving
+                        {product.calories} kcal
                       </span>
+                      {product?.is_halal === true && (
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Halal</Badge>
+                      )}
+                      {product?.is_kosher === true && (
+                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Kosher</Badge>
+                      )}
+                      {product?.is_vegan === true && (
+                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">Vegan</Badge>
+                      )}
+                      {product?.is_vegetarian === true && (
+                        <Badge className="bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-300">Vegetarian</Badge>
+                      )}
+                      {Array.isArray((product as any)?.certifications) && (product as any).certifications.map((cert: string, idx: number) => (
+                        <Badge key={`cert-${idx}`} variant="outline" className="capitalize">{cert}</Badge>
+                      ))}
                     </div>
                     {product.description && (
                       <p className="text-muted-foreground">{product.description}</p>

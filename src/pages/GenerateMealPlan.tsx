@@ -16,7 +16,7 @@ import { generateAIRecipe, GenerateAIRecipeRequest, AIRecipe, storeMealGeneratio
 
 export default function GenerateMealPlan() {
   const navigate = useNavigate();
-  const { pantryItems } = usePantry();
+  const { pantryItems, replaceGeneratedMeals, generatedMeals } = usePantry();
 
   const [calories, setCalories] = useState<number>(500);
   const [protein, setProtein] = useState<number>(25);
@@ -31,7 +31,6 @@ export default function GenerateMealPlan() {
   const [favoriteCuisines, setFavoriteCuisines] = useState<string[]>([]);
   const [selectedPantry, setSelectedPantry] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedRecipes, setGeneratedRecipes] = useState<AIRecipe[]>([]);
 
   const toggleInList = (value: string, list: string[], setList: (v: string[]) => void) => {
     if (list.includes(value)) setList(list.filter(v => v !== value));
@@ -102,7 +101,7 @@ export default function GenerateMealPlan() {
         return;
       }
 
-      setGeneratedRecipes(recipes);
+      replaceGeneratedMeals(recipes);
       toast.success(`Generated ${recipes.length} AI recipe(s)!`, {
         description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
       });
@@ -320,7 +319,7 @@ export default function GenerateMealPlan() {
         </Card>
 
         {/* Generated Recipes Display */}
-        {generatedRecipes.length > 0 && (
+        {generatedMeals.length > 0 && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -330,7 +329,7 @@ export default function GenerateMealPlan() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {generatedRecipes.map((recipe, index) => (
+                {generatedMeals.map((recipe, index) => (
                   <Card key={index} className="group hover:shadow-lg transition-all duration-300">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg group-hover:text-primary transition-colors">

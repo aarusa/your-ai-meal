@@ -6,19 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Package, ChefHat, Plus, Minus, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ArrowLeft, Package, ChefHat, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
 import { Recipe } from "@/data/recipes";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchUserMealsSimple, apiMealToRecipe, ApiMeal } from "@/lib/api";
+import { fetchUserMealsSimple, apiMealToRecipe, ApiMeal, AIRecipe } from "@/lib/api";
 
 export default function MyPantry() {
   const navigate = useNavigate();
-  const { pantryItems, removeFromPantry, updateQuantity, addToPantry } = usePantry();
+  const { pantryItems, removeFromPantry, updateQuantity, addToPantry, generatedMeals, replaceGeneratedMeals } = usePantry();
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [generatedRecipes, setGeneratedRecipes] = useState<Recipe[]>([]);
   const [showRecipes, setShowRecipes] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [storedMeals, setStoredMeals] = useState<ApiMeal[]>([]);
@@ -85,7 +84,6 @@ export default function MyPantry() {
       const body = {
         userId,
         ingredients: selected.map(p => ({ id: p.id, name: p.name })),
-        servings: 2,
       };
 
       const resp = await fetch(`${API_BASE}/api/ai/recipes`, {
@@ -107,8 +105,8 @@ export default function MyPantry() {
          return;
        }
 
-       // Clear previous generated recipes and set new ones
-       setGeneratedRecipes(recipes);
+       // Replace previous generated recipes with new ones
+       replaceGeneratedMeals(recipes);
        setShowRecipes(true);
        
        if (json.stored) {
@@ -128,14 +126,14 @@ export default function MyPantry() {
     }
   };
 
-  const handleAddRecipeToMealPlan = (recipe: Recipe) => {
+  const handleAddRecipeToMealPlan = (recipe: Recipe | AIRecipe) => {
     // Add recipe as a meal to dashboard (this would need to be implemented in the dashboard state management)
     // For now, we'll just show a success message and redirect
     toast.success(`Added ${recipe.name} to your dashboard!`);
     navigate("/"); // Redirect to dashboard
   };
 
-  const handleViewRecipeDetails = (recipe: Recipe) => {
+  const handleViewRecipeDetails = (recipe: Recipe | AIRecipe) => {
     // Navigate to meal detail page using recipe ID
     navigate(`/meal/${recipe.id}`);
   };
@@ -267,6 +265,12 @@ export default function MyPantry() {
                       <div className="flex items-center gap-2 mb-1 overflow-hidden">
                         <h3 className="font-semibold text-lg truncate">{item.name}</h3>
                         <Badge variant="secondary" className="flex-shrink-0">{item.category}</Badge>
+                        {item.is_halal === true && (
+                          <Badge className="flex-shrink-0 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Halal</Badge>
+                        )}
+                        {item.is_halal === false && (
+                          <Badge className="flex-shrink-0 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Non-halal</Badge>
+                        )}
                       </div>
                       
                       {item.description && (
@@ -286,32 +290,8 @@ export default function MyPantry() {
                       </div>
                     </div>
                     
-                    {/* Quantity Controls */}
+                    {/* Remove Item */}
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        className="h-8 w-8"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      
-                      <div className="text-center min-w-[3rem]">
-                        <div className="font-semibold">{item.quantity}</div>
-                        <div className="text-xs text-muted-foreground">servings</div>
-                      </div>
-                      
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="h-8 w-8"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      
                       <Button
                         variant="ghost"
                         size="icon"
@@ -348,31 +328,31 @@ export default function MyPantry() {
           </div>
         )}
 
-        {/* Meal Tabs Section */}
-        {generatedRecipes.length > 0 && (
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-primary" />
-                Your Meals
-              </h2>
+        {/* Generated Meals Section - Always visible */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
+              Generated Meals
+            </h2>
+            {generatedMeals.length > 0 && (
               <Button
                 variant="outline"
                 onClick={() => setShowRecipes(!showRecipes)}
               >
                 {showRecipes ? 'Hide Meals' : 'Show Meals'}
               </Button>
-            </div>
+            )}
+          </div>
 
-            {showRecipes && (
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="generated" className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   Generated Meals
-                  {generatedRecipes.length > 0 && (
+                  {generatedMeals.length > 0 && (
                     <Badge variant="secondary" className="ml-1 text-xs">
-                      {generatedRecipes.length}
+                      {generatedMeals.length}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -389,9 +369,9 @@ export default function MyPantry() {
 
               {/* Generated Meals Tab */}
               <TabsContent value="generated" className="space-y-6">
-                {generatedRecipes.length > 0 ? (
+                {generatedMeals.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
-                    {generatedRecipes.map((recipe) => (
+                    {generatedMeals.map((recipe) => (
                       <Card key={recipe.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
                         <CardHeader className="pb-4">
                           <div className="flex items-start justify-between">
@@ -419,10 +399,7 @@ export default function MyPantry() {
                               <Clock className="h-4 w-4" />
                               {recipe.prepTime + recipe.cookTime}min
                             </div>
-                            <div className="flex items-center gap-1 text-muted-foreground">
-                              <Users className="h-4 w-4" />
-                              {recipe.servings}
-                            </div>
+                              
                             <div className="flex items-center gap-1 text-muted-foreground">
                               <Star className="h-4 w-4" />
                               {recipe.difficulty}
@@ -478,7 +455,7 @@ export default function MyPantry() {
                               }}
                             >
                               <ChefHat className="h-4 w-4 mr-1" />
-                              Cook
+                              Add to Meal Plan
                             </Button>
                           </div>
                         </CardContent>
@@ -488,10 +465,28 @@ export default function MyPantry() {
                 ) : (
                   <div className="text-center py-12">
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Generated Meals</h3>
-                    <p className="text-muted-foreground">
-                      Select ingredients and click "Generate AI Meals" to create personalized meal suggestions.
+                    <h3 className="text-lg font-semibold mb-2">No Generated Meals Yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Select ingredients from your pantry above and click "Generate AI Meals" to create personalized meal suggestions.
                     </p>
+                    {pantryItems.length > 0 ? (
+                      <Button
+                        variant="outline"
+                        onClick={handleGenerateMeal}
+                        disabled={selectedCount === 0 || isGenerating}
+                      >
+                        <ChefHat className="h-4 w-4 mr-2" />
+                        Generate Your First Meal
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/")}
+                      >
+                        <Package className="h-4 w-4 mr-2" />
+                        Add Ingredients to Pantry
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>
@@ -541,10 +536,7 @@ export default function MyPantry() {
                                 <Clock className="h-4 w-4" />
                                 {meal.total_time_minutes}min
                               </div>
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <Users className="h-4 w-4" />
-                                {meal.servings}
-                              </div>
+                              
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Star className="h-4 w-4" />
                                 {meal.difficulty_level}
@@ -628,9 +620,7 @@ export default function MyPantry() {
                 )}
               </TabsContent>
             </Tabs>
-            )}
           </div>
-        )}
       </main>
     </div>
   );
