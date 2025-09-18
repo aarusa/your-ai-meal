@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, Users, ChefHat, Star, Heart, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock, Users, ChefHat, Star, Heart, ThumbsUp, ThumbsDown, Sparkles, List, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -447,74 +447,74 @@ export default function MealDetail() {
       setError('Failed to load meal from database');
       // If backend fails, try to find in static data as fallback
       const param = decodeURIComponent(mealId);
-      const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-      
+  const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+  
       let staticMeal = mealsData.find(m => m.id === param)
-        || mealsData.find(m => toSlug(m.title) === param)
-        || mealsData.find(m => m.title === param);
+    || mealsData.find(m => toSlug(m.title) === param)
+    || mealsData.find(m => m.title === param);
 
-      // If not found in mealsData, try to find in recipes
+  // If not found in mealsData, try to find in recipes
       if (!staticMeal) {
-        const recipe = getRecipeById(param);
-        if (recipe) {
-          // Convert recipe to meal format
+    const recipe = getRecipeById(param);
+    if (recipe) {
+      // Convert recipe to meal format
           staticMeal = {
-            id: recipe.id,
-            label: recipe.category,
-            calories: recipe.nutrition.calories,
-            title: recipe.name,
+        id: recipe.id,
+        label: recipe.category,
+        calories: recipe.nutrition.calories,
+        title: recipe.name,
             image: "/placeholder.svg",
-            macros: { c: recipe.nutrition.carbs, p: recipe.nutrition.protein, f: recipe.nutrition.fat },
-            cookTime: `${recipe.cookTime} min`,
-            servings: recipe.servings,
-            difficulty: recipe.difficulty,
-            ingredients: recipe.ingredients.map(ing => `${ing.amount} ${ing.unit} ${ing.productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`),
-            instructions: recipe.instructions,
-            nutrition: {
-              calories: recipe.nutrition.calories,
-              carbs: recipe.nutrition.carbs,
-              protein: recipe.nutrition.protein,
-              fat: recipe.nutrition.fat,
+        macros: { c: recipe.nutrition.carbs, p: recipe.nutrition.protein, f: recipe.nutrition.fat },
+        cookTime: `${recipe.cookTime} min`,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty,
+        ingredients: recipe.ingredients.map(ing => `${ing.amount} ${ing.unit} ${ing.productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`),
+        instructions: recipe.instructions,
+        nutrition: {
+          calories: recipe.nutrition.calories,
+          carbs: recipe.nutrition.carbs,
+          protein: recipe.nutrition.protein,
+          fat: recipe.nutrition.fat,
               fiber: 0,
               sugar: 0,
               sodium: 0,
-            },
-          } as any;
-        }
-      }
+        },
+      } as any;
+    }
+  }
 
       if (staticMeal) {
         setMeal(staticMeal);
         setAiMeal(null);
       } else {
-        // Build a dynamic default meal from the URL so every meal has a detail page
-        const titleFromParam = param
-          .replace(/-/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-          .replace(/\b\w/g, (c) => c.toUpperCase()) || "Meal";
+    // Build a dynamic default meal from the URL so every meal has a detail page
+    const titleFromParam = param
+      .replace(/-/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\b\w/g, (c) => c.toUpperCase()) || "Meal";
         const defaultMeal = {
-          id: toSlug(titleFromParam),
-          label: "Meal",
-          calories: 0,
-          title: titleFromParam,
-          image: "/placeholder.svg",
-          macros: { c: 0, p: 0, f: 0 },
-          cookTime: "-",
-          servings: 1,
-          difficulty: "-",
-          ingredients: [],
-          instructions: [],
-          nutrition: {
-            calories: 0,
-            carbs: 0,
-            protein: 0,
-            fat: 0,
-            fiber: 0,
-            sugar: 0,
-            sodium: 0,
-          },
-        } as any;
+      id: toSlug(titleFromParam),
+      label: "Meal",
+      calories: 0,
+      title: titleFromParam,
+      image: "/placeholder.svg",
+      macros: { c: 0, p: 0, f: 0 },
+      cookTime: "-",
+      servings: 1,
+      difficulty: "-",
+      ingredients: [],
+      instructions: [],
+      nutrition: {
+        calories: 0,
+        carbs: 0,
+        protein: 0,
+        fat: 0,
+        fiber: 0,
+        sugar: 0,
+        sodium: 0,
+      },
+    } as any;
         setMeal(defaultMeal);
         setAiMeal(null);
       }
@@ -621,216 +621,209 @@ export default function MealDetail() {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="container max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image and basic info */}
-          <div className="space-y-4">
-            <img 
-              src={generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
-              alt={`${currentMeal.name || currentMeal.title} recipe`}
-              className="w-full h-80 object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`;
-              }}
-            />
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="container max-w-6xl mx-auto px-4 py-6">
+          {/* Hero Section */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 mb-6">
+              <Badge variant="secondary" className="px-4 py-2 text-sm font-medium">
+                {currentMeal.category || currentMeal.label}
+              </Badge>
+              {aiMeal && (
+                <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI Generated
+                </Badge>
+              )}
+        </div>
             
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {currentMeal.cookTime}
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">
+              {currentMeal.name || currentMeal.title}
+            </h1>
+            
+            <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 max-w-2xl mx-auto">
+              {currentMeal.nutrition?.calories || currentMeal.calories} calories per serving
+            </p>
+
+            {/* Quick Stats */}
+            <div className="flex items-center justify-center gap-6 mb-8">
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <Clock className="h-5 w-5" />
+                <span className="font-medium">{currentMeal.cookTime}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
-                {currentMeal.servings} serving
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <Users className="h-5 w-5" />
+                <span className="font-medium">{currentMeal.servings} serving</span>
               </div>
-              <div className="flex items-center gap-1">
-                <ChefHat className="h-4 w-4" />
-                {currentMeal.difficulty}
+              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <ChefHat className="h-5 w-5" />
+                <span className="font-medium">{currentMeal.difficulty}</span>
               </div>
+            </div>
+
+            {/* Main Image */}
+            <div className="relative w-full mb-8">
+              <img 
+                src={generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
+                alt={`${currentMeal.name || currentMeal.title} recipe`}
+                className="w-full h-80 lg:h-96 object-cover rounded-3xl shadow-2xl"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`;
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>
             </div>
           </div>
 
-          {/* Title and nutrition */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary">{currentMeal.category || currentMeal.label}</Badge>
-                {aiMeal && (
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    AI Generated
-                  </Badge>
-                )}
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Ingredients */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-slate-100">Ingredients</h2>
+                <div className="space-y-3">
+                  {currentMeal.ingredients?.map((ingredient, index) => {
+                    const ingredientText = typeof ingredient === 'string' 
+                      ? ingredient 
+                      : `${ingredient.amount} ${ingredient.unit} ${ingredient.productId?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'ingredient'}`;
+                    
+                    return (
+                      <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700 dark:text-slate-300">{ingredientText}</span>
+                      </div>
+                    );
+                  }) || []}
+                  {(!currentMeal.ingredients || currentMeal.ingredients.length === 0) && (
+                    <div className="text-slate-500 dark:text-slate-400 italic p-3">
+                      No ingredients available
+                    </div>
+                  )}
+                </div>
               </div>
-              <h1 className="text-3xl font-bold mb-2">{currentMeal.name || currentMeal.title}</h1>
-              <p className="text-lg text-muted-foreground">{currentMeal.nutrition?.calories || currentMeal.calories} calories per serving</p>
-              {aiMeal && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Generated on {new Date(aiMeal.created_at).toLocaleDateString()}
-                </p>
-              )}
+            </div>
+
+            {/* Right Column - Instructions & Actions */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Instructions */}
+            <div>
+                <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">Instructions</h2>
+                <div className="space-y-3">
+                  {currentMeal.instructions?.map((instruction, index) => (
+                    <div key={index} className="flex gap-4 p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+                      <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </div>
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed pt-1">{instruction}</p>
+                    </div>
+                  )) || []}
+                  {(!currentMeal.instructions || currentMeal.instructions.length === 0) && (
+                    <div className="text-slate-500 dark:text-slate-400 italic p-6">
+                      No instructions available
+                    </div>
+                  )}
+                </div>
             </div>
 
             {/* Nutrition Facts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Nutrition Facts</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.carbs || 0}g</p>
-                    <p className="text-sm text-muted-foreground">Carbs</p>
+              <div>
+                <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">Nutrition</h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+                    <div className="text-2xl font-bold text-primary mb-1">{currentMeal.nutrition?.calories || 0}</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Calories</div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.protein || 0}g</p>
-                    <p className="text-sm text-muted-foreground">Protein</p>
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+                    <div className="text-2xl font-bold text-primary mb-1">{currentMeal.nutrition?.protein || 0}g</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Protein</div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.fat || 0}g</p>
-                    <p className="text-sm text-muted-foreground">Fat</p>
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+                    <div className="text-2xl font-bold text-primary mb-1">{currentMeal.nutrition?.carbs || 0}g</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Carbs</div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+                    <div className="text-2xl font-bold text-primary mb-1">{currentMeal.nutrition?.fat || 0}g</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400">Fat</div>
+                  </div>
                   </div>
                 </div>
                 
-                <Separator />
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Fiber</span>
-                    <span>{currentMeal.nutrition?.fiber || 0}g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sugar</span>
-                    <span>{currentMeal.nutrition?.sugar || 0}g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sodium</span>
-                    <span>{currentMeal.nutrition?.sodium || 0}mg</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Calories</span>
-                    <span>{currentMeal.nutrition?.calories || 0}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Meal Actions - Only show for AI-generated meals */}
-            {aiMeal && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    AI Generated Meal Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Status and Rating */}
-                  <div className="flex items-center gap-4">
+              {/* AI Meal Actions - Only show for AI-generated meals */}
+              {aiMeal && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-slate-100">Actions</h2>
+                  
+                  {/* Status */}
+                  <div className="flex items-center gap-4 mb-4 p-4 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-slate-600 dark:text-slate-400">Status:</span>
+                    </div>
                     <Badge variant={aiMeal.status === 'accepted' ? 'default' : aiMeal.status === 'rejected' ? 'destructive' : 'secondary'}>
                       {aiMeal.status}
                     </Badge>
                     {aiMeal.user_rating && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 ml-auto">
+                        <span className="text-slate-600 dark:text-slate-400 text-sm">Rating:</span>
                         {[...Array(5)].map((_, i) => (
                           <Star 
                             key={i} 
-                            className={`h-4 w-4 ${i < aiMeal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                            className={`h-4 w-4 ${i < aiMeal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} 
                           />
                         ))}
-                      </div>
+                  </div>
                     )}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Button 
                       variant="outline" 
-                      size="sm"
                       onClick={handleToggleFavorite}
                       disabled={isUpdating}
-                      className="flex items-center gap-2"
+                      className="h-12 flex items-center gap-2 hover:bg-red-50 hover:border-red-200 hover:text-red-700"
                     >
                       <Heart className={`h-4 w-4 ${aiMeal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
-                      {aiMeal.is_favorited ? 'Favorited' : 'Add to Favorites'}
+                      {aiMeal.is_favorited ? 'Favorited' : 'Favorite'}
                     </Button>
                     
                     {aiMeal.status !== 'accepted' && (
                       <Button 
                         variant="default" 
-                        size="sm"
                         onClick={() => handleUpdateStatus('accepted')}
                         disabled={isUpdating}
-                        className="flex items-center gap-2"
+                        className="h-12 flex items-center gap-2"
                       >
                         <ThumbsUp className="h-4 w-4" />
-                        Accept Meal
+                        Accept
                       </Button>
                     )}
                     
                     {aiMeal.status !== 'rejected' && (
                       <Button 
                         variant="destructive" 
-                        size="sm"
                         onClick={() => handleUpdateStatus('rejected')}
                         disabled={isUpdating}
-                        className="flex items-center gap-2"
+                        className="h-12 flex items-center gap-2"
                       >
                         <ThumbsDown className="h-4 w-4" />
-                        Reject Meal
+                        Reject
                       </Button>
                     )}
                   </div>
 
                   {/* User Feedback */}
                   {aiMeal.user_feedback && (
-                    <div className="mt-4 p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Your Feedback:</p>
-                      <p className="text-sm">{aiMeal.user_feedback}</p>
-                    </div>
+                    <div className="mt-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Your Feedback</p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">{aiMeal.user_feedback}</p>
+                  </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Ingredients and Instructions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ingredients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {currentMeal.ingredients?.map((ingredient, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    {typeof ingredient === 'string' ? ingredient : `${ingredient.amount} ${ingredient.unit} ${ingredient.productId}`}
-                  </li>
-                )) || []}
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Instructions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="space-y-3">
-                {currentMeal.instructions?.map((instruction, index) => (
-                  <li key={index} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </span>
-                    <span className="pt-0.5">{instruction}</span>
-                  </li>
-                )) || []}
-              </ol>
-            </CardContent>
-          </Card>
         </div>
       </main>
     </div>
