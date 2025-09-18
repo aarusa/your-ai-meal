@@ -177,7 +177,7 @@ export default function MyPantry() {
     .reduce((sum, item) => sum + (item.calories * item.quantity), 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
@@ -256,17 +256,17 @@ export default function MyPantry() {
             {pantryItems.map((item) => (
               <Card key={item.id} className="soft-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 overflow-hidden">
                     <Checkbox
                       checked={selectedItems.has(item.id)}
                       onCheckedChange={() => toggleSelection(item.id)}
-                      className="h-5 w-5"
+                      className="h-5 w-5 flex-shrink-0"
                     />
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">{item.name}</h3>
-                        <Badge variant="secondary">{item.category}</Badge>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-2 mb-1 overflow-hidden">
+                        <h3 className="font-semibold text-lg truncate">{item.name}</h3>
+                        <Badge variant="secondary" className="flex-shrink-0">{item.category}</Badge>
                       </div>
                       
                       {item.description && (
@@ -275,19 +275,19 @@ export default function MyPantry() {
                         </p>
                       )}
                       
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{item.calories} kcal</span>
-                        <span>P: {item.protein}g</span>
-                        <span>C: {item.carbs}g</span>
-                        <span>F: {item.fat}g</span>
-                        <span className="text-xs">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground overflow-hidden">
+                        <span className="font-medium text-foreground flex-shrink-0">{item.calories} kcal</span>
+                        <span className="flex-shrink-0">P: {item.protein}g</span>
+                        <span className="flex-shrink-0">C: {item.carbs}g</span>
+                        <span className="flex-shrink-0">F: {item.fat}g</span>
+                        <span className="text-xs flex-shrink-0">
                           Added {item.addedAt.toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     
                     {/* Quantity Controls */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <Button
                         variant="outline"
                         size="icon"
@@ -390,7 +390,7 @@ export default function MyPantry() {
               {/* Generated Meals Tab */}
               <TabsContent value="generated" className="space-y-6">
                 {generatedRecipes.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
                     {generatedRecipes.map((recipe) => (
                       <Card key={recipe.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
                         <CardHeader className="pb-4">
@@ -504,7 +504,7 @@ export default function MyPantry() {
                     <p className="text-muted-foreground">Loading your meal history...</p>
                   </div>
                 ) : storedMeals.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
                     {storedMeals.map((meal) => {
                       const recipe = apiMealToRecipe(meal);
                       return (

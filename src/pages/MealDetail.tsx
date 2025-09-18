@@ -12,7 +12,7 @@ import { ApiMeal } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Generate food image URL using Faker-style approach
+// Generate food image URL using static.photos
 const generateUnsplashFoodImage = (mealName: string) => {
   const width = 800;
   const height = 600;
@@ -20,14 +20,8 @@ const generateUnsplashFoodImage = (mealName: string) => {
   // Create a seed based on meal name for consistent images
   const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
-  // Use different food-related image services
-  const imageServices = [
-    `https://picsum.photos/seed/${seed}/${width}/${height}`,
-    `https://picsum.photos/${width}/${height}?random=${seed}`,
-    `https://source.unsplash.com/${width}x${height}/?food,meal,cooking`
-  ];
-  
-  return imageServices[Math.floor(Math.random() * imageServices.length)];
+  // Use static.photos for food images - hand-curated, contextual images
+  return `https://static.photos/food/${width}x${height}/${seed}`;
 };
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";

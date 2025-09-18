@@ -36,7 +36,7 @@ import {
   updateMealStatus 
 } from "@/lib/api";
 
-// Generate food image URL using Faker-style approach
+// Generate food image URL using static.photos
 const generateUnsplashFoodImage = (mealName: string) => {
   const width = 400;
   const height = 300;
@@ -44,14 +44,8 @@ const generateUnsplashFoodImage = (mealName: string) => {
   // Create a seed based on meal name for consistent images
   const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
-  // Use different food-related image services
-  const imageServices = [
-    `https://picsum.photos/seed/${seed}/${width}/${height}`,
-    `https://picsum.photos/${width}/${height}?random=${seed}`,
-    `https://source.unsplash.com/${width}x${height}/?food,meal,cooking`
-  ];
-  
-  return imageServices[Math.floor(Math.random() * imageServices.length)];
+  // Use static.photos for food images - hand-curated, contextual images
+  return `https://static.photos/food/${width}x${height}/${seed}`;
 };
 
 export default function UserGeneratedMeals() {
