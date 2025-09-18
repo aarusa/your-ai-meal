@@ -298,6 +298,12 @@ export async function fetchRecentMeals(userId: string, limit = 5): Promise<ApiMe
 
 // Convert API meal to frontend Recipe format
 export function apiMealToRecipe(apiMeal: ApiMeal): any {
+  // Make output independent of DB: never rely on meal_ingredients_ai.
+  // Sanitize any UUID-like tokens from AI text to human-friendly placeholder.
+  const uuidRegex = /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g;
+  const isUuid = (v: any) => typeof v === 'string' && uuidRegex.test(v);
+  const replaceUuidsInText = (text: string) => text.replace(uuidRegex, 'ingredient').replace(/\s+/g, ' ').trim();
+
   return {
     id: apiMeal.id,
     name: apiMeal.name,
@@ -307,12 +313,24 @@ export function apiMealToRecipe(apiMeal: ApiMeal): any {
     cookTime: apiMeal.cook_time_minutes,
     servings: apiMeal.servings,
     difficulty: apiMeal.difficulty_level.charAt(0).toUpperCase() + apiMeal.difficulty_level.slice(1),
-    ingredients: apiMeal.meal_ingredients_ai?.map(ing => ({
-      productId: ing.product_id,
-      amount: ing.quantity,
-      unit: ing.unit
-    })) || [],
-    instructions: apiMeal.generation_criteria?.instructions || [],
+    // Show AI ingredients directly (no DB relationship at all). Remove any UUIDs.
+    ingredients: ((apiMeal as any)?.generation_criteria?.ingredients || []).map((ing: any) => {
+      // If already a string, return as-is (but strip UUIDs to a friendly label if found)
+      if (typeof ing === 'string') return replaceUuidsInText(ing);
+      // Otherwise, build a friendly line like "2 cup salt"
+      const parts: string[] = [];
+      if (ing.amount !== null && ing.amount !== undefined) parts.push(String(ing.amount));
+      if (ing.unit) parts.push(String(ing.unit));
+      const rawLabel = ing.name || ing.ingredient_name || ing.productId || 'ingredient';
+      const label = isUuid(rawLabel) ? 'ingredient' : replaceUuidsInText(String(rawLabel));
+      parts.push(label);
+      return parts.join(' ').trim();
+    }),
+    instructions: (apiMeal.generation_criteria?.instructions || []).map((step: string) => {
+      if (typeof step !== 'string') return step;
+      // Replace any UUIDs in the text with a generic ingredient label
+      return replaceUuidsInText(step);
+    }),
     nutrition: {
       calories: apiMeal.total_calories,
       protein: apiMeal.total_protein,
