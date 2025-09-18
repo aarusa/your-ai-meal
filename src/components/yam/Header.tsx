@@ -145,11 +145,11 @@ export function DashboardHeader() {
         <Button 
           variant="hero" 
           className="hidden sm:inline-flex" 
-          aria-label="Generate Meal Plan"
+          aria-label="Generate AI Meals"
           onClick={() => navigate("/plan")}
         >
           <Sparkles className="h-4 w-4" />
-          Generate Meal Plan
+          Generate AI Meals
         </Button>
 
         <Avatar 

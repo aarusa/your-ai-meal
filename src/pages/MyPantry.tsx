@@ -328,7 +328,7 @@ export default function MyPantry() {
           </div>
         )}
 
-        {/* Show Recipes Button */}
+        {/* Generate AI Meals Button */}
         {pantryItems.length > 0 && (
           <div className="mt-8 flex justify-center">
             <Button
@@ -338,7 +338,7 @@ export default function MyPantry() {
               disabled={selectedCount === 0 || isGenerating}
             >
               <ChefHat className="h-5 w-5 mr-2" />
-              {isGenerating ? "Generating..." : "Show Recipes"}
+              {isGenerating ? "Generating..." : "Generate AI Meals"}
               {selectedCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {selectedCount} ingredients
@@ -490,7 +490,7 @@ export default function MyPantry() {
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No Generated Meals</h3>
                     <p className="text-muted-foreground">
-                      Select ingredients and click "Show Recipes" to generate AI-powered meal suggestions.
+                      Select ingredients and click "Generate AI Meals" to create personalized meal suggestions.
                     </p>
                   </div>
                 )}
