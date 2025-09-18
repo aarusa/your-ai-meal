@@ -40,32 +40,14 @@ export interface AIRecipe {
   tags: string[];
 }
 
-export async function generateAIRecipe(request: GenerateAIRecipeRequest, userId?: string): Promise<AIRecipe[]> {
+export async function generateAIRecipe(request: GenerateAIRecipeRequest): Promise<AIRecipe[]> {
   try {
-    // Transform the request to match backend expectations
-    const backendRequest = {
-      userId,
-      ingredients: request.ingredients.map(ingredient => ({
-        id: ingredient.toLowerCase().replace(/\s+/g, '-'),
-        name: ingredient
-      })),
-      servings: request.servings || 2,
-      // Include other preferences for future use
-      dietaryPreferences: request.dietaryPreferences,
-      allergies: request.allergies,
-      favoriteCuisines: request.favoriteCuisines,
-      calories: request.calories,
-      protein: request.protein,
-      mealType: request.mealType,
-      cookTime: request.cookTime
-    };
-
     const response = await fetch(`${API_BASE}/api/ai/recipes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(backendRequest),
+      body: JSON.stringify(request),
     });
 
     if (!response.ok) {

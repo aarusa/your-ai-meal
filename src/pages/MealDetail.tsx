@@ -601,17 +601,17 @@ export default function MealDetail() {
 
   const currentMeal = aiMeal ? apiMealToRecipe(aiMeal) : meal;
   if (!currentMeal) {
-    return (
-      <div className="min-h-screen bg-background">
+  return (
+    <div className="min-h-screen bg-background">
         <DashboardHeader />
         <div className="container max-w-6xl mx-auto px-4 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-muted-foreground">Meal not found</h1>
             <Button onClick={() => navigate("/")} className="mt-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
         </div>
       </div>
     );
@@ -692,17 +692,17 @@ export default function MealDetail() {
                       <div key={index} className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
                         <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
                         <span className="text-slate-700 dark:text-slate-300">{ingredientText}</span>
-                      </div>
+              </div>
                     );
                   }) || []}
                   {(!currentMeal.ingredients || currentMeal.ingredients.length === 0) && (
                     <div className="text-slate-500 dark:text-slate-400 italic p-3">
                       No ingredients available
-                    </div>
+              </div>
                   )}
-                </div>
               </div>
             </div>
+          </div>
 
             {/* Right Column - Instructions & Actions */}
             <div className="lg:col-span-2 space-y-8">
@@ -822,8 +822,8 @@ export default function MealDetail() {
                   )}
                 </div>
               )}
-            </div>
           </div>
+        </div>
         </div>
       </main>
     </div>

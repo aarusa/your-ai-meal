@@ -48,10 +48,15 @@ export default function GenerateMealPlan() {
     try {
       setIsGenerating(true);
       
-      // Get selected pantry items (optional)
+      // Get selected pantry items
       const selectedIngredients = pantryItems
         .filter(item => selectedPantry.has(item.id))
         .map(item => item.name);
+
+      if (selectedIngredients.length === 0) {
+        toast.error("Please select at least one ingredient from your pantry");
+        return;
+      }
 
       // Get user preferences from Supabase
       const { data } = await supabase.auth.getUser();
@@ -74,7 +79,7 @@ export default function GenerateMealPlan() {
       };
 
       // Generate AI recipes
-      const recipes = await generateAIRecipe(request, userId);
+      const recipes = await generateAIRecipe(request);
       
       if (recipes.length === 0) {
         toast.error("No recipes could be generated with the selected criteria");
@@ -102,7 +107,7 @@ export default function GenerateMealPlan() {
         const { data: dp, error: dpe } = await supabase.from("dietary_preferences").select("name");
         if (!dpe && dp && dp.length > 0) setDietaryOptions(dp.map((r: any) => r.name));
 
-        const { data: ao, error: aoe } = await supabase.from("allergies").select("name");
+        const { data: ao, error: aoe } = await supabase.from("allergy_options").select("name");
         if (!aoe && ao && ao.length > 0) setAllergyOptions(ao.map((r: any) => r.name));
       } catch (e) {
         // keep defaults silently
@@ -226,10 +231,10 @@ export default function GenerateMealPlan() {
             <section>
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <Utensils className="h-4 w-4 text-primary" />
-                Pantry Items (Optional) ({selectedPantry.size}/{pantryItems.length} selected)
+                Pantry Items ({selectedPantry.size}/{pantryItems.length} selected)
               </h3>
               {pantryItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Your pantry is empty. You can still generate meals based on your preferences, or add items from product detail pages.</p>
+                <p className="text-sm text-muted-foreground">Your pantry is empty. Add items from product detail pages.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {pantryItems.map(item => (
@@ -252,7 +257,7 @@ export default function GenerateMealPlan() {
                 size="lg" 
                 className="px-8" 
                 onClick={handleGenerate} 
-                disabled={isGenerating}
+                disabled={isGenerating || selectedPantry.size === 0}
                 aria-label="Generate meal plan with AI"
               >
                 {isGenerating ? (
@@ -269,7 +274,7 @@ export default function GenerateMealPlan() {
               </Button>
               {selectedPantry.size === 0 && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  No pantry items selected - AI will generate meals based on your preferences
+                  Please select ingredients from your pantry to generate meals
                 </p>
               )}
             </div>

@@ -22,7 +22,8 @@ import {
   Sparkles,
   TrendingUp,
   Award,
-  Zap
+  Zap,
+  Trash
 } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { toast } from "sonner";
@@ -34,7 +35,8 @@ import {
   searchMeals, 
   apiMealToRecipe, 
   ApiMeal,
-  updateMealStatus 
+  updateMealStatus,
+  deleteMeal
 } from "@/lib/api";
 
 // Generate food image URL using static.photos
@@ -307,6 +309,24 @@ export default function UserGeneratedMeals() {
     } catch (error) {
       console.error('Error updating favorite status:', error);
       toast.error('Failed to update favorite status');
+    }
+  };
+
+  const handleDeleteMeal = async (mealId: string) => {
+    try {
+      const confirmed = window.confirm('Delete this meal permanently?');
+      if (!confirmed) return;
+
+      await deleteMeal(mealId);
+
+      // Remove from local state
+      setMeals(prev => prev.filter(m => m.id !== mealId));
+      setFilteredMeals(prev => prev.filter(m => m.id !== mealId));
+
+      toast.success('Meal deleted');
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      toast.error('Failed to delete meal');
     }
   };
 
@@ -608,6 +628,15 @@ export default function UserGeneratedMeals() {
                               >
                                 <ThumbsUp className="h-3 w-3" />
                               </Button>
+                              <Button 
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleDeleteMeal(meal.id)}
+                                aria-label="Delete meal"
+                              >
+                                <Trash className="h-3 w-3" />
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -760,6 +789,15 @@ export default function UserGeneratedMeals() {
                               >
                                 <ThumbsUp className="h-3 w-3" />
                               </Button>
+                              <Button 
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleDeleteMeal(meal.id)}
+                                aria-label="Delete meal"
+                              >
+                                <Trash className="h-3 w-3" />
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -909,6 +947,15 @@ export default function UserGeneratedMeals() {
                               >
                                 <ThumbsUp className="h-3 w-3" />
                               </Button>
+                              <Button 
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleDeleteMeal(meal.id)}
+                                aria-label="Delete meal"
+                              >
+                                <Trash className="h-3 w-3" />
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -1055,6 +1102,15 @@ export default function UserGeneratedMeals() {
                                 onClick={() => handleRateMeal(meal.id, 5)}
                               >
                                 <ThumbsUp className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 px-2"
+                                onClick={() => handleDeleteMeal(meal.id)}
+                                aria-label="Delete meal"
+                              >
+                                <Trash className="h-3 w-3" />
                               </Button>
                             </div>
                           </CardContent>
