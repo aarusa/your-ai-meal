@@ -2,6 +2,84 @@
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
 
+// AI Recipe Generation
+export interface GenerateAIRecipeRequest {
+  ingredients: string[];
+  dietaryPreferences?: string[];
+  allergies?: string[];
+  favoriteCuisines?: string[];
+  calories?: number;
+  protein?: number;
+  mealType?: string;
+  cookTime?: number;
+  servings?: number;
+}
+
+export interface AIRecipe {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+  difficulty: string;
+  ingredients: Array<{
+    productId: string;
+    amount: number;
+    unit: string;
+    note?: string;
+  }>;
+  instructions: string[];
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  tags: string[];
+}
+
+export async function generateAIRecipe(request: GenerateAIRecipeRequest, userId?: string): Promise<AIRecipe[]> {
+  try {
+    // Transform the request to match backend expectations
+    const backendRequest = {
+      userId,
+      ingredients: request.ingredients.map(ingredient => ({
+        id: ingredient.toLowerCase().replace(/\s+/g, '-'),
+        name: ingredient
+      })),
+      servings: request.servings || 2,
+      // Include other preferences for future use
+      dietaryPreferences: request.dietaryPreferences,
+      allergies: request.allergies,
+      favoriteCuisines: request.favoriteCuisines,
+      calories: request.calories,
+      protein: request.protein,
+      mealType: request.mealType,
+      cookTime: request.cookTime
+    };
+
+    const response = await fetch(`${API_BASE}/api/ai/recipes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(backendRequest),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate AI recipe: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.recipes || [];
+  } catch (error) {
+    console.error('Error generating AI recipe:', error);
+    throw error;
+  }
+}
+
 export interface ApiMeal {
   id: string;
   user_id: string;
