@@ -107,6 +107,7 @@ export default function MyPantry() {
          return;
        }
 
+       // Clear previous generated recipes and set new ones
        setGeneratedRecipes(recipes);
        setShowRecipes(true);
        
@@ -120,7 +121,8 @@ export default function MyPantry() {
          toast.success(`Generated ${recipes.length} AI recipe(s)!`);
        }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to generate recipes");
+      console.error('Meal generation error:', err);
+      toast.error("Meal generation failed, try other ingredient combinations");
     } finally {
       setIsGenerating(false);
     }
@@ -347,7 +349,7 @@ export default function MyPantry() {
         )}
 
         {/* Meal Tabs Section */}
-        {showRecipes && (
+        {generatedRecipes.length > 0 && (
           <div className="mt-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -356,13 +358,14 @@ export default function MyPantry() {
               </h2>
               <Button
                 variant="outline"
-                onClick={() => setShowRecipes(false)}
+                onClick={() => setShowRecipes(!showRecipes)}
               >
-                Hide Meals
+                {showRecipes ? 'Hide Meals' : 'Show Meals'}
               </Button>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {showRecipes && (
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="generated" className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
@@ -625,6 +628,7 @@ export default function MyPantry() {
                 )}
               </TabsContent>
             </Tabs>
+            )}
           </div>
         )}
       </main>

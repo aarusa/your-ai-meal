@@ -88,7 +88,8 @@ export async function updateMealStatus(
   mealId: string, 
   status: 'generated' | 'accepted' | 'rejected' | 'cooked',
   rating?: number,
-  feedback?: string
+  feedback?: string,
+  isFavorited?: boolean
 ): Promise<ApiMeal> {
   try {
     const response = await fetch(`${API_BASE}/api/meals/${encodeURIComponent(mealId)}/status`, {
@@ -99,7 +100,8 @@ export async function updateMealStatus(
       body: JSON.stringify({
         status,
         rating,
-        feedback
+        feedback,
+        isFavorited
       }),
     });
     

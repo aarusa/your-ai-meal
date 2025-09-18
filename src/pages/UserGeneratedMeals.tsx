@@ -36,6 +36,24 @@ import {
   updateMealStatus 
 } from "@/lib/api";
 
+// Generate food image URL using Faker-style approach
+const generateUnsplashFoodImage = (mealName: string) => {
+  const width = 400;
+  const height = 300;
+  
+  // Create a seed based on meal name for consistent images
+  const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Use different food-related image services
+  const imageServices = [
+    `https://picsum.photos/seed/${seed}/${width}/${height}`,
+    `https://picsum.photos/${width}/${height}?random=${seed}`,
+    `https://source.unsplash.com/${width}x${height}/?food,meal,cooking`
+  ];
+  
+  return imageServices[Math.floor(Math.random() * imageServices.length)];
+};
+
 export default function UserGeneratedMeals() {
   const navigate = useNavigate();
   const [meals, setMeals] = useState<ApiMeal[]>([]);
@@ -390,7 +408,30 @@ export default function UserGeneratedMeals() {
                     {filteredMeals.map((meal) => {
                       const recipe = apiMealToRecipe(meal);
                       return (
-                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
+                        <Card key={meal.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20 overflow-hidden">
+                          {/* Meal Image */}
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={generateUnsplashFoodImage(meal.name)} 
+                              alt={meal.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                              }}
+                            />
+                            <div className="absolute top-3 right-3">
+                              <Badge variant="secondary" className="bg-background/90 backdrop-blur-sm">
+                                {meal.meal_type}
+                              </Badge>
+                            </div>
+                            {meal.is_favorited && (
+                              <div className="absolute top-3 left-3">
+                                <Heart className="h-5 w-5 text-red-500 fill-red-500 bg-background/90 backdrop-blur-sm rounded-full p-1" />
+                              </div>
+                            )}
+                          </div>
+                          
                           <CardHeader className="pb-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -399,9 +440,6 @@ export default function UserGeneratedMeals() {
                                   <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
                                     {meal.name}
                                   </CardTitle>
-                                  {meal.is_favorited && (
-                                    <Heart className="h-4 w-4 text-red-500 fill-red-500" />
-                                  )}
                                 </div>
                                 <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                                   {meal.description}
@@ -411,9 +449,6 @@ export default function UserGeneratedMeals() {
                                   {formatDate(meal.created_at)}
                                 </p>
                               </div>
-                              <Badge variant="secondary" className="ml-2">
-                                {meal.meal_type}
-                              </Badge>
                             </div>
                           </CardHeader>
                           

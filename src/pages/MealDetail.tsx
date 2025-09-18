@@ -1,10 +1,34 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Users, ChefHat } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Clock, Users, ChefHat, Star, Heart, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { getRecipeById, Recipe } from "@/data/recipes";
+import { DashboardHeader } from "@/components/yam/Header";
+import { fetchMeal, updateMealStatus, apiMealToRecipe } from "@/lib/api";
+import { ApiMeal } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+// Generate food image URL using Faker-style approach
+const generateUnsplashFoodImage = (mealName: string) => {
+  const width = 800;
+  const height = 600;
+  
+  // Create a seed based on meal name for consistent images
+  const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Use different food-related image services
+  const imageServices = [
+    `https://picsum.photos/seed/${seed}/${width}/${height}`,
+    `https://picsum.photos/${width}/${height}?random=${seed}`,
+    `https://source.unsplash.com/${width}x${height}/?food,meal,cooking`
+  ];
+  
+  return imageServices[Math.floor(Math.random() * imageServices.length)];
+};
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
 import avo from "@/assets/meal-avocado-toast.jpg";
@@ -399,113 +423,236 @@ const mealsData = [
 export default function MealDetail() {
   const { mealId } = useParams();
   const navigate = useNavigate();
+  const [meal, setMeal] = useState<any>(null);
+  const [aiMeal, setAiMeal] = useState<ApiMeal | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const param = mealId ? decodeURIComponent(mealId) : "";
-  const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-  
-  // First try to find in mealsData
-  let meal = mealsData.find(m => m.id === param)
-    || mealsData.find(m => toSlug(m.title) === param)
-    || mealsData.find(m => m.title === param);
+  useEffect(() => {
+    loadMeal();
+  }, [mealId]);
 
-  // If not found in mealsData, try to find in recipes
-  if (!meal) {
-    const recipe = getRecipeById(param);
-    if (recipe) {
-      // Convert recipe to meal format
-      meal = {
-        id: recipe.id,
-        label: recipe.category,
-        calories: recipe.nutrition.calories,
-        title: recipe.name,
-        image: "/placeholder.svg", // Use placeholder for recipes
-        macros: { c: recipe.nutrition.carbs, p: recipe.nutrition.protein, f: recipe.nutrition.fat },
-        cookTime: `${recipe.cookTime} min`,
-        servings: recipe.servings,
-        difficulty: recipe.difficulty,
-        ingredients: recipe.ingredients.map(ing => `${ing.amount} ${ing.unit} ${ing.productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`),
-        instructions: recipe.instructions,
-        nutrition: {
-          calories: recipe.nutrition.calories,
-          carbs: recipe.nutrition.carbs,
-          protein: recipe.nutrition.protein,
-          fat: recipe.nutrition.fat,
-          fiber: 0, // Recipes don't have fiber data
-          sugar: 0, // Recipes don't have sugar data
-          sodium: 0, // Recipes don't have sodium data
-        },
-      } as any;
+  const loadMeal = async () => {
+    if (!mealId) {
+      setIsLoading(false);
+      return;
     }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Fetch AI-generated meal from backend API
+      const aiMealData = await fetchMeal(mealId);
+      setAiMeal(aiMealData);
+      setMeal(null);
+      console.log('Successfully loaded meal from backend:', aiMealData);
+    } catch (error) {
+      console.error('Failed to fetch meal from backend:', error);
+      setError('Failed to load meal from database');
+      // If backend fails, try to find in static data as fallback
+      const param = decodeURIComponent(mealId);
+      const toSlug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+      
+      let staticMeal = mealsData.find(m => m.id === param)
+        || mealsData.find(m => toSlug(m.title) === param)
+        || mealsData.find(m => m.title === param);
+
+      // If not found in mealsData, try to find in recipes
+      if (!staticMeal) {
+        const recipe = getRecipeById(param);
+        if (recipe) {
+          // Convert recipe to meal format
+          staticMeal = {
+            id: recipe.id,
+            label: recipe.category,
+            calories: recipe.nutrition.calories,
+            title: recipe.name,
+            image: "/placeholder.svg",
+            macros: { c: recipe.nutrition.carbs, p: recipe.nutrition.protein, f: recipe.nutrition.fat },
+            cookTime: `${recipe.cookTime} min`,
+            servings: recipe.servings,
+            difficulty: recipe.difficulty,
+            ingredients: recipe.ingredients.map(ing => `${ing.amount} ${ing.unit} ${ing.productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`),
+            instructions: recipe.instructions,
+            nutrition: {
+              calories: recipe.nutrition.calories,
+              carbs: recipe.nutrition.carbs,
+              protein: recipe.nutrition.protein,
+              fat: recipe.nutrition.fat,
+              fiber: 0,
+              sugar: 0,
+              sodium: 0,
+            },
+          } as any;
+        }
+      }
+
+      if (staticMeal) {
+        setMeal(staticMeal);
+        setAiMeal(null);
+      } else {
+        // Build a dynamic default meal from the URL so every meal has a detail page
+        const titleFromParam = param
+          .replace(/-/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, (c) => c.toUpperCase()) || "Meal";
+        const defaultMeal = {
+          id: toSlug(titleFromParam),
+          label: "Meal",
+          calories: 0,
+          title: titleFromParam,
+          image: "/placeholder.svg",
+          macros: { c: 0, p: 0, f: 0 },
+          cookTime: "-",
+          servings: 1,
+          difficulty: "-",
+          ingredients: [],
+          instructions: [],
+          nutrition: {
+            calories: 0,
+            carbs: 0,
+            protein: 0,
+            fat: 0,
+            fiber: 0,
+            sugar: 0,
+            sodium: 0,
+          },
+        } as any;
+        setMeal(defaultMeal);
+        setAiMeal(null);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (status: 'generated' | 'accepted' | 'rejected' | 'cooked', rating?: number, feedback?: string) => {
+    if (!aiMeal) return;
+    
+    try {
+      setIsUpdating(true);
+      await updateMealStatus(aiMeal.id, status, rating, feedback);
+      
+      // Update local state
+      setAiMeal(prev => prev ? {
+        ...prev,
+        status,
+        user_rating: rating || prev.user_rating,
+        user_feedback: feedback || prev.user_feedback
+      } : null);
+      
+      toast.success(`Meal ${status} successfully!`);
+    } catch (error) {
+      console.error('Failed to update meal status:', error);
+      toast.error('Failed to update meal status');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!aiMeal) return;
+    
+    try {
+      setIsUpdating(true);
+      const newFavoriteStatus = !aiMeal.is_favorited;
+      await updateMealStatus(aiMeal.id, aiMeal.status as 'generated' | 'accepted' | 'rejected' | 'cooked', aiMeal.user_rating, aiMeal.user_feedback, newFavoriteStatus);
+      
+      setAiMeal(prev => prev ? { ...prev, is_favorited: newFavoriteStatus } : null);
+      toast.success(newFavoriteStatus ? 'Added to favorites!' : 'Removed from favorites!');
+    } catch (error) {
+      console.error('Failed to update favorite status:', error);
+      toast.error('Failed to update favorite status');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader />
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-muted-foreground">Loading meal...</h1>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  if (!meal) {
-    // Build a dynamic default meal from the URL so every meal has a detail page
-    const titleFromParam = param
-      .replace(/-/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/\b\w/g, (c) => c.toUpperCase()) || "Meal";
-    meal = {
-      id: toSlug(titleFromParam),
-      label: "Meal",
-      calories: 0,
-      title: titleFromParam,
-      image: "/placeholder.svg",
-      macros: { c: 0, p: 0, f: 0 },
-      cookTime: "-",
-      servings: 1,
-      difficulty: "-",
-      ingredients: [],
-      instructions: [],
-      nutrition: {
-        calories: 0,
-        carbs: 0,
-        protein: 0,
-        fat: 0,
-        fiber: 0,
-        sugar: 0,
-        sodium: 0,
-      },
-    } as any;
+  if (error && !meal && !aiMeal) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader />
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-muted-foreground mb-4">Error Loading Meal</h1>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button onClick={() => navigate("/meals")} className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to My Meals
+            </Button>
+            <Button variant="outline" onClick={() => loadMeal()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentMeal = aiMeal ? apiMealToRecipe(aiMeal) : meal;
+  if (!currentMeal) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader />
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-muted-foreground">Meal not found</h1>
+            <Button onClick={() => navigate("/")} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/")}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </div>
-      </header>
+      <DashboardHeader />
 
       <main className="container max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image and basic info */}
           <div className="space-y-4">
             <img 
-              src={meal.image} 
-              alt={`${meal.title} recipe`}
+              src={generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
+              alt={`${currentMeal.name || currentMeal.title} recipe`}
               className="w-full h-80 object-cover rounded-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`;
+              }}
             />
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {meal.cookTime}
+                {currentMeal.cookTime}
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                {meal.servings} serving
+                {currentMeal.servings} serving
               </div>
               <div className="flex items-center gap-1">
                 <ChefHat className="h-4 w-4" />
-                {meal.difficulty}
+                {currentMeal.difficulty}
               </div>
             </div>
           </div>
@@ -513,9 +660,22 @@ export default function MealDetail() {
           {/* Title and nutrition */}
           <div className="space-y-6">
             <div>
-              <Badge variant="secondary" className="mb-2">{meal.label}</Badge>
-              <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
-              <p className="text-lg text-muted-foreground">{meal.calories} calories per serving</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary">{currentMeal.category || currentMeal.label}</Badge>
+                {aiMeal && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    AI Generated
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-3xl font-bold mb-2">{currentMeal.name || currentMeal.title}</h1>
+              <p className="text-lg text-muted-foreground">{currentMeal.nutrition?.calories || currentMeal.calories} calories per serving</p>
+              {aiMeal && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Generated on {new Date(aiMeal.created_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
 
             {/* Nutrition Facts */}
@@ -526,15 +686,15 @@ export default function MealDetail() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{meal.nutrition.carbs}g</p>
+                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.carbs || 0}g</p>
                     <p className="text-sm text-muted-foreground">Carbs</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{meal.nutrition.protein}g</p>
+                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.protein || 0}g</p>
                     <p className="text-sm text-muted-foreground">Protein</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-2xl font-bold text-primary">{meal.nutrition.fat}g</p>
+                    <p className="text-2xl font-bold text-primary">{currentMeal.nutrition?.fat || 0}g</p>
                     <p className="text-sm text-muted-foreground">Fat</p>
                   </div>
                 </div>
@@ -544,23 +704,101 @@ export default function MealDetail() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex justify-between">
                     <span>Fiber</span>
-                    <span>{meal.nutrition.fiber}g</span>
+                    <span>{currentMeal.nutrition?.fiber || 0}g</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Sugar</span>
-                    <span>{meal.nutrition.sugar}g</span>
+                    <span>{currentMeal.nutrition?.sugar || 0}g</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Sodium</span>
-                    <span>{meal.nutrition.sodium}mg</span>
+                    <span>{currentMeal.nutrition?.sodium || 0}mg</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Calories</span>
-                    <span>{meal.nutrition.calories}</span>
+                    <span>{currentMeal.nutrition?.calories || 0}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI Meal Actions - Only show for AI-generated meals */}
+            {aiMeal && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    AI Generated Meal Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Status and Rating */}
+                  <div className="flex items-center gap-4">
+                    <Badge variant={aiMeal.status === 'accepted' ? 'default' : aiMeal.status === 'rejected' ? 'destructive' : 'secondary'}>
+                      {aiMeal.status}
+                    </Badge>
+                    {aiMeal.user_rating && (
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`h-4 w-4 ${i < aiMeal.user_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleToggleFavorite}
+                      disabled={isUpdating}
+                      className="flex items-center gap-2"
+                    >
+                      <Heart className={`h-4 w-4 ${aiMeal.is_favorited ? 'fill-red-500 text-red-500' : ''}`} />
+                      {aiMeal.is_favorited ? 'Favorited' : 'Add to Favorites'}
+                    </Button>
+                    
+                    {aiMeal.status !== 'accepted' && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => handleUpdateStatus('accepted')}
+                        disabled={isUpdating}
+                        className="flex items-center gap-2"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                        Accept Meal
+                      </Button>
+                    )}
+                    
+                    {aiMeal.status !== 'rejected' && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleUpdateStatus('rejected')}
+                        disabled={isUpdating}
+                        className="flex items-center gap-2"
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                        Reject Meal
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* User Feedback */}
+                  {aiMeal.user_feedback && (
+                    <div className="mt-4 p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-1">Your Feedback:</p>
+                      <p className="text-sm">{aiMeal.user_feedback}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
@@ -572,12 +810,12 @@ export default function MealDetail() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {meal.ingredients.map((ingredient, index) => (
+                {currentMeal.ingredients?.map((ingredient, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    {ingredient}
+                    {typeof ingredient === 'string' ? ingredient : `${ingredient.amount} ${ingredient.unit} ${ingredient.productId}`}
                   </li>
-                ))}
+                )) || []}
               </ul>
             </CardContent>
           </Card>
@@ -588,14 +826,14 @@ export default function MealDetail() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-3">
-                {meal.instructions.map((instruction, index) => (
+                {currentMeal.instructions?.map((instruction, index) => (
                   <li key={index} className="flex gap-3">
                     <span className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
                       {index + 1}
                     </span>
                     <span className="pt-0.5">{instruction}</span>
                   </li>
-                ))}
+                )) || []}
               </ol>
             </CardContent>
           </Card>
