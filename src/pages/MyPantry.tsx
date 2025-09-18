@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Package, ChefHat, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ArrowLeft, Package, ChefHat, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown, Utensils, Flame, Zap } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
 import { Recipe } from "@/data/recipes";
@@ -174,9 +175,68 @@ export default function MyPantry() {
     .filter(item => selectedItems.has(item.id))
     .reduce((sum, item) => sum + (item.calories * item.quantity), 0);
 
+  // Creative Loading Component
+  const MealGenerationLoader = () => (
+    <Dialog open={isGenerating} onOpenChange={() => {}}>
+      <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <div className="flex flex-col items-center justify-center p-8 space-y-6">
+          {/* Animated Chef Hat */}
+          <div className="relative">
+            <div className="animate-bounce">
+              <ChefHat className="h-16 w-16 text-primary" />
+            </div>
+            <div className="absolute -top-2 -right-2 animate-ping">
+              <Sparkles className="h-6 w-6 text-yellow-400" />
+            </div>
+            <div className="absolute -bottom-2 -left-2 animate-pulse">
+              <Flame className="h-5 w-5 text-orange-400" />
+            </div>
+          </div>
+
+          {/* Main Title */}
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Cooking Up Magic! 🍳
+            </h3>
+            <p className="text-muted-foreground">
+              Our AI chef is crafting the perfect meals for you...
+            </p>
+          </div>
+
+          {/* Animated Progress Dots */}
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+
+          {/* Rotating Tips */}
+          <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4 w-full max-w-sm">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Utensils className="h-4 w-4 animate-spin" style={{ animationDuration: '3s' }} />
+              <span className="animate-pulse">
+                Analyzing your ingredients and preferences...
+              </span>
+            </div>
+          </div>
+
+          {/* Fun Facts */}
+          <div className="text-xs text-center text-muted-foreground space-y-1">
+            <p>✨ Creating personalized recipes just for you</p>
+            <p>🍽️ Considering your dietary preferences</p>
+            <p>⚡ Optimizing for taste and nutrition</p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
+      
+      {/* Creative Meal Generation Loader */}
+      <MealGenerationLoader />
       
       <main className="container max-w-6xl mx-auto px-4 py-8">
         {/* Page Title */}
@@ -251,7 +311,9 @@ export default function MyPantry() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {pantryItems.map((item) => (
+            {pantryItems
+              .sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime())
+              .map((item) => (
               <Card key={item.id} className="soft-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4 overflow-hidden">

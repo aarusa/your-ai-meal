@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, Settings, Sparkles } from "lucide-react";
+import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, Settings, Sparkles, ChefHat, Zap } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePantry } from "@/contexts/PantryContext";
@@ -134,9 +135,69 @@ export default function GenerateMealPlan() {
     loadOptions();
   }, []);
 
+  // Creative Loading Component
+  const MealGenerationLoader = () => (
+    <Dialog open={isGenerating} onOpenChange={() => {}}>
+      <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <div className="flex flex-col items-center justify-center p-8 space-y-6">
+          {/* Animated Chef Hat */}
+          <div className="relative">
+            <div className="animate-bounce">
+              <ChefHat className="h-16 w-16 text-primary" />
+            </div>
+            <div className="absolute -top-2 -right-2 animate-ping">
+              <Sparkles className="h-6 w-6 text-yellow-400" />
+            </div>
+            <div className="absolute -bottom-2 -left-2 animate-pulse">
+              <Flame className="h-5 w-5 text-orange-400" />
+            </div>
+          </div>
+
+          {/* Main Title */}
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Creating Your Perfect Meal! 🍽️
+            </h3>
+            <p className="text-muted-foreground">
+              Our AI chef is designing a meal plan tailored to your preferences...
+            </p>
+          </div>
+
+          {/* Animated Progress Dots */}
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+
+          {/* Rotating Tips */}
+          <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4 w-full max-w-sm">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Target className="h-4 w-4 animate-spin" style={{ animationDuration: '3s' }} />
+              <span className="animate-pulse">
+                Calculating perfect macros and flavors...
+              </span>
+            </div>
+          </div>
+
+          {/* Fun Facts */}
+          <div className="text-xs text-center text-muted-foreground space-y-1">
+            <p>🎯 Targeting {calories} calories and {protein}g protein</p>
+            <p>⏱️ Optimizing for {cookTime} minute cook time</p>
+            <p>🍴 Creating {servings} perfect serving{servings > 1 ? 's' : ''}</p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
+      
+      {/* Creative Meal Generation Loader */}
+      <MealGenerationLoader />
+      
       <main className="container max-w-6xl mx-auto px-4 py-8 overflow-x-hidden">
 
         <Card className="soft-shadow">

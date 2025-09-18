@@ -17,7 +17,6 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addToPantry } = usePantry();
   const [product, setProduct] = useState<Product | null>(null);
-  // Quantity/servings removed per requirement
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -185,42 +184,16 @@ export default function ProductDetail() {
             </Card>
           </div>
 
-          {/* Quantity & Actions */}
+          {/* Actions */}
           <div className="space-y-6">
             <Card className="soft-shadow">
               <CardHeader>
-                <CardTitle>Quantity</CardTitle>
+                <CardTitle>Add to Pantry</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{quantity}</div>
-                    <div className="text-sm text-muted-foreground">serving{quantity !== 1 ? 's' : ''}</div>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <Separator />
-                
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Total Calories:</span>
+                    <span>Calories:</span>
                     <span className="font-medium">{totalCalories} kcal</span>
                   </div>
                   <div className="flex justify-between">
