@@ -437,6 +437,57 @@ export default function MealDetail() {
       setIsLoading(true);
       setError(null);
       
+      // First, check if there's a recipe stored in localStorage (Type 2 generated meals)
+      const storedRecipe = localStorage.getItem('selectedRecipe');
+      if (storedRecipe) {
+        try {
+          const recipeData = JSON.parse(storedRecipe);
+          // Check if this is the meal we're looking for
+          if (recipeData.id === mealId) {
+            // Convert AI recipe to meal format
+            const convertedMeal = {
+              id: recipeData.id,
+              name: recipeData.name,
+              title: recipeData.name,
+              category: recipeData.category,
+              label: recipeData.category,
+              description: recipeData.description,
+              calories: recipeData.nutrition?.calories || 0,
+              cookTime: `${recipeData.cookTime} min`,
+              prepTime: `${recipeData.prepTime} min`,
+              servings: recipeData.servings,
+              difficulty: recipeData.difficulty,
+              ingredients: recipeData.ingredients?.map((ing: any) => 
+                `${ing.amount} ${ing.unit} ${ing.productId || ing.name || 'ingredient'}`
+              ) || [],
+              instructions: recipeData.instructions || [],
+              nutrition: {
+                calories: recipeData.nutrition?.calories || 0,
+                carbs: recipeData.nutrition?.carbs || 0,
+                protein: recipeData.nutrition?.protein || 0,
+                fat: recipeData.nutrition?.fat || 0,
+                fiber: 0,
+                sugar: 0,
+                sodium: 0,
+              },
+              macros: {
+                c: recipeData.nutrition?.carbs || 0,
+                p: recipeData.nutrition?.protein || 0,
+                f: recipeData.nutrition?.fat || 0,
+              },
+              tags: recipeData.tags || [],
+              generationType: 'type2'
+            };
+            setMeal(convertedMeal);
+            setAiMeal(null);
+            console.log('Successfully loaded Type 2 meal from localStorage:', convertedMeal);
+            return;
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse stored recipe:', parseError);
+        }
+      }
+      
       // Fetch AI-generated meal from backend API
       const aiMealData = await fetchMeal(mealId);
       setAiMeal(aiMealData);
@@ -631,6 +682,12 @@ export default function MealDetail() {
               </Badge>
               {aiMeal && (
                 <Badge variant="outline" className="px-4 py-2 text-sm font-medium">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI Generated
+                </Badge>
+              )}
+              {meal?.generationType === 'type2' && (
+                <Badge variant="outline" className="px-4 py-2 text-sm font-medium bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
                   <Sparkles className="h-3 w-3 mr-1" />
                   AI Generated
                 </Badge>

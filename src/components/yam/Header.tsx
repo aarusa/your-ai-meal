@@ -152,7 +152,7 @@ export function DashboardHeader() {
           <Button 
             variant="hero" 
             aria-label="Generate AI Meals"
-            onClick={() => navigate("/plan")}
+            onClick={() => navigate("/generate")}
           >
             <Sparkles className="h-4 w-4" />
             Generate AI Meals
@@ -219,7 +219,7 @@ export function DashboardHeader() {
                 <Button 
                   variant="ghost" 
                   className="w-full justify-start h-12 px-4 hover:bg-primary/10 hover:text-primary"
-                  onClick={() => handleMobileMenuNavigation("/plan")}
+                  onClick={() => handleMobileMenuNavigation("/generate")}
                 >
                   <Sparkles className="h-4 w-4 mr-3" />
                   <span className="font-medium">Generate AI Meals</span>

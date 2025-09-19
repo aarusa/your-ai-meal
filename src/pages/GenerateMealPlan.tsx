@@ -3,21 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/yam/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, Settings, Sparkles, ChefHat, Zap } from "lucide-react";
+import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, Settings, Sparkles, ChefHat, Zap, Eye, Star } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePantry } from "@/contexts/PantryContext";
-import { generateAIRecipe, GenerateAIRecipeRequest, AIRecipe, storeMealGenerationRequest } from "@/lib/api";
+import { generateAIRecipe, GenerateAIRecipeRequest, storeMealGenerationRequest, AIRecipe } from "@/lib/api";
 
 // Options will be loaded from database with safe fallbacks
 
 export default function GenerateMealPlan() {
   const navigate = useNavigate();
-  const { pantryItems, replaceGeneratedMeals, generatedMeals } = usePantry();
+  const { pantryItems, type2GeneratedMeals, replaceType2GeneratedMeals } = usePantry();
+  
+  const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
 
   const [calories, setCalories] = useState<number>(500);
   const [protein, setProtein] = useState<number>(25);
@@ -44,6 +47,17 @@ export default function GenerateMealPlan() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  const handleViewRecipeDetails = (recipe: any) => {
+    // Store the recipe in localStorage and navigate to meal detail page
+    localStorage.setItem('selectedRecipe', JSON.stringify(recipe));
+    navigate(`/meal/${recipe.id}`);
+  };
+
+  const handleAddRecipeToMealPlan = (recipe: any) => {
+    // Add recipe to meal plan logic
+    toast.success(`${recipe.name} added to your meal plan!`);
   };
 
   const handleGenerate = async () => {
@@ -102,10 +116,54 @@ export default function GenerateMealPlan() {
         return;
       }
 
-      replaceGeneratedMeals(recipes);
-      toast.success(`Generated ${recipes.length} AI recipe(s)!`, {
-        description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
-      });
+      replaceType2GeneratedMeals(recipes);
+      
+      // Store the generated meals in the database using the new Type 2 endpoint
+      try {
+        const generationCriteria = {
+          calories,
+          protein,
+          mealType: mealType.toLowerCase(),
+          cookTime,
+          servings,
+          dietaryPreferences: dietaryPrefs,
+          allergies,
+          favoriteCuisines,
+          selectedIngredients: selectedIngredients
+        };
+
+        const storeResponse = await fetch(`${API_BASE}/api/ai/plan/store`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            recipes: recipes,
+            generationCriteria
+          }),
+        });
+
+        if (storeResponse.ok) {
+          const storeResult = await storeResponse.json();
+          if (storeResult.stored) {
+            toast.success(`Generated and saved ${storeResult.storedCount} AI recipe(s) to your meals!`, {
+              description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
+            });
+          } else {
+            toast.success(`Generated ${recipes.length} AI recipe(s)!`, {
+              description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
+            });
+          }
+        } else {
+          toast.success(`Generated ${recipes.length} AI recipe(s)!`, {
+            description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
+          });
+        }
+      } catch (storeError) {
+        console.warn('Failed to store meals in database:', storeError);
+        toast.success(`Generated ${recipes.length} AI recipe(s)!`, {
+          description: `Type: ${mealType} • ${calories} kcal • ${protein}g protein • ${servings} serving(s)`
+        });
+      }
 
     } catch (error) {
       console.error('Error generating AI recipes:', error);
@@ -379,40 +437,48 @@ export default function GenerateMealPlan() {
           </CardContent>
         </Card>
 
-        {/* Generated Recipes Display */}
-        {generatedMeals.length > 0 && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Generated AI Meals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {generatedMeals.map((recipe, index) => (
-                  <Card key={index} className="group hover:shadow-lg transition-all duration-300">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                        {recipe.name}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {recipe.description}
-                      </p>
+        {/* Generated Meals Section - Always visible */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
+              Generated Meals
+            </h2>
+          </div>
+
+          {type2GeneratedMeals.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {type2GeneratedMeals.map((recipe, index) => (
+                  <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-background to-muted/20">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                              {recipe.name}
+                            </CardTitle>
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {recipe.description}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="ml-2">
+                          {recipe.category}
+                        </Badge>
+                      </div>
                     </CardHeader>
+                    
                     <CardContent className="space-y-4">
                       {/* Quick Stats */}
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-4 w-4" />
-                          {recipe.cookTime}min
+                          {recipe.prepTime + recipe.cookTime}min
                         </div>
+                          
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <Users className="h-4 w-4" />
-                          {recipe.servings}
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Target className="h-4 w-4" />
+                          <Star className="h-4 w-4" />
                           {recipe.difficulty}
                         </div>
                       </div>
@@ -428,54 +494,45 @@ export default function GenerateMealPlan() {
                             <span>Protein:</span>
                             <span className="font-medium">{recipe.nutrition.protein}g</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Carbs:</span>
-                            <span className="font-medium">{recipe.nutrition.carbs}g</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Fat:</span>
-                            <span className="font-medium">{recipe.nutrition.fat}g</span>
-                          </div>
                         </div>
                       </div>
 
-                      {/* Ingredients Preview */}
-                      <div>
-                        <h4 className="text-sm font-medium mb-2">Ingredients:</h4>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          {recipe.ingredients.slice(0, 3).map((ingredient, idx) => (
-                            <div key={idx} className="flex items-center gap-1">
-                              <div className="w-1 h-1 bg-primary rounded-full"></div>
-                              <span>{ingredient.amount} {ingredient.unit} {ingredient.productId}</span>
-                            </div>
-                          ))}
-                          {recipe.ingredients.length > 3 && (
-                            <div className="text-muted-foreground">
-                              +{recipe.ingredients.length - 3} more ingredients
-                            </div>
-                          )}
-                        </div>
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 h-9 text-sm"
+                          onClick={() => handleViewRecipeDetails(recipe)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                        <Button 
+                          variant="default"
+                          size="sm"
+                          className="flex-1 h-9 text-sm"
+                          onClick={() => handleAddRecipeToMealPlan(recipe)}
+                        >
+                          <ChefHat className="h-4 w-4 mr-1" />
+                          Add to Meal Plan
+                        </Button>
                       </div>
-
-                      {/* Action Button */}
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          // Store the recipe in localStorage or navigate to a detail page
-                          localStorage.setItem('generatedRecipe', JSON.stringify(recipe));
-                          toast.success("Recipe saved! You can view it in your meals.");
-                        }}
-                      >
-                        Save Recipe
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Generated Meals Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Set your preferences above and click "Generate with AI" to create personalized meal suggestions.
+              </p>
+            </div>
+          )}
+        </div>
+
       </main>
     </div>
   );

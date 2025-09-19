@@ -36,7 +36,7 @@ const App = () => (
           <Route path="/recipe/:recipeId" element={<AuthGuard><RecipeDetail /></AuthGuard>} />
           <Route path="/pantry" element={<AuthGuard><MyPantry /></AuthGuard>} />
           <Route path="/meals" element={<AuthGuard><UserGeneratedMeals /></AuthGuard>} />
-          <Route path="/plan" element={<AuthGuard><GenerateMealPlan /></AuthGuard>} />
+          <Route path="/generate" element={<AuthGuard><GenerateMealPlan /></AuthGuard>} />
           <Route path="/plan-test" element={<AuthGuard><PlanTest /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/auth" element={<Auth />} />

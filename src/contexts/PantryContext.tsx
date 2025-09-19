@@ -19,6 +19,10 @@ interface PantryContextType {
   addGeneratedMeals: (meals: Recipe[] | AIRecipe[]) => void;
   replaceGeneratedMeals: (meals: Recipe[] | AIRecipe[]) => void;
   clearGeneratedMeals: () => void;
+  type2GeneratedMeals: AIRecipe[];
+  addType2GeneratedMeals: (meals: AIRecipe[]) => void;
+  replaceType2GeneratedMeals: (meals: AIRecipe[]) => void;
+  clearType2GeneratedMeals: () => void;
 }
 
 const PantryContext = createContext<PantryContextType | undefined>(undefined);
@@ -26,6 +30,7 @@ const PantryContext = createContext<PantryContextType | undefined>(undefined);
 export function PantryProvider({ children }: { children: ReactNode }) {
   const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
   const [generatedMeals, setGeneratedMeals] = useState<(Recipe | AIRecipe)[]>([]);
+  const [type2GeneratedMeals, setType2GeneratedMeals] = useState<AIRecipe[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
   const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://your-ai-meal-api.onrender.com";
@@ -163,6 +168,18 @@ export function PantryProvider({ children }: { children: ReactNode }) {
     setGeneratedMeals([]);
   };
 
+  const addType2GeneratedMeals = (meals: AIRecipe[]) => {
+    setType2GeneratedMeals(prev => [...prev, ...meals]);
+  };
+
+  const replaceType2GeneratedMeals = (meals: AIRecipe[]) => {
+    setType2GeneratedMeals(meals);
+  };
+
+  const clearType2GeneratedMeals = () => {
+    setType2GeneratedMeals([]);
+  };
+
   return (
     <PantryContext.Provider
       value={{
@@ -175,6 +192,10 @@ export function PantryProvider({ children }: { children: ReactNode }) {
         addGeneratedMeals,
         replaceGeneratedMeals,
         clearGeneratedMeals,
+        type2GeneratedMeals,
+        addType2GeneratedMeals,
+        replaceType2GeneratedMeals,
+        clearType2GeneratedMeals,
       }}
     >
       {children}

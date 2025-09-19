@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ArrowLeft, Package, ChefHat, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown, Utensils, Flame, Zap } from "lucide-react";
+import { ArrowLeft, Package, ChefHat, X, Clock, Users, Star, History, Sparkles, Heart, ThumbsUp, ThumbsDown, Utensils, Flame, Zap, Eye } from "lucide-react";
 import { DashboardHeader } from "@/components/yam/Header";
 import { usePantry } from "@/contexts/PantryContext";
 import { Recipe } from "@/data/recipes";
@@ -468,53 +468,36 @@ export default function MyPantry() {
                             </div>
                           </div>
 
-                          {/* Nutrition Highlight */}
-                          <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-lg border border-primary/20">
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                              <div className="text-center">
-                                <div className="font-bold text-primary text-lg">{recipe.nutrition.calories}</div>
-                                <div className="text-xs text-muted-foreground">Calories</div>
+                          {/* Nutrition */}
+                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 p-3 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex justify-between">
+                                <span>Calories:</span>
+                                <span className="font-medium">{recipe.nutrition.calories}</span>
                               </div>
-                              <div className="text-center">
-                                <div className="font-bold text-lg">{recipe.nutrition.protein}g</div>
-                                <div className="text-xs text-muted-foreground">Protein</div>
+                              <div className="flex justify-between">
+                                <span>Protein:</span>
+                                <span className="font-medium">{recipe.nutrition.protein}g</span>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Tags */}
-                          <div className="flex flex-wrap gap-1">
-                            {recipe.tags.slice(0, 3).map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                            {recipe.tags.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{recipe.tags.length - 3} more
-                              </Badge>
-                            )}
                           </div>
 
                           {/* Actions */}
                           <div className="flex gap-2 pt-2">
                             <Button 
                               variant="outline"
+                              size="sm"
                               className="flex-1 h-9 text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewRecipeDetails(recipe);
-                              }}
+                              onClick={() => handleViewRecipeDetails(recipe)}
                             >
+                              <Eye className="h-4 w-4 mr-1" />
                               View Details
                             </Button>
                             <Button 
-                              className="flex-1 h-9 text-sm" 
                               variant="default"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddRecipeToMealPlan(recipe);
-                              }}
+                              size="sm"
+                              className="flex-1 h-9 text-sm"
+                              onClick={() => handleAddRecipeToMealPlan(recipe)}
                             >
                               <ChefHat className="h-4 w-4 mr-1" />
                               Add to Meal Plan
