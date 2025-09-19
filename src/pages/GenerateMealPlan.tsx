@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Target, Flame, Dumbbell, Utensils, Clock, Users, Leaf, AlertTriangle, Settings, Sparkles, ChefHat, Zap, Eye, Star } from "lucide-react";
 import { useEffect } from "react";
@@ -197,6 +197,10 @@ export default function GenerateMealPlan() {
   const MealGenerationLoader = () => (
     <Dialog open={isGenerating} onOpenChange={() => {}}>
       <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        <DialogTitle className="sr-only">Generating Meal Plan</DialogTitle>
+        <DialogDescription className="sr-only">
+          AI is creating a personalized meal plan based on your preferences and dietary requirements.
+        </DialogDescription>
         <div className="flex flex-col items-center justify-center p-8 space-y-6">
           {/* Animated Chef Hat */}
           <div className="relative">
