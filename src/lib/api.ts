@@ -38,6 +38,11 @@ export interface AIRecipe {
     fat: number;
   };
   tags: string[];
+  image_url?: string;
+  thumbnail_url?: string;
+  image_alt?: string;
+  photographer?: string;
+  photographer_url?: string;
 }
 
 export async function generateAIRecipe(request: GenerateAIRecipeRequest): Promise<AIRecipe[]> {

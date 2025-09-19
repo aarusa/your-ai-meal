@@ -473,6 +473,27 @@ export default function GenerateMealPlan() {
                       </div>
                     </CardHeader>
                     
+                    {/* Recipe Image */}
+                    {recipe.image_url && recipe.image_url !== "/placeholder.svg" && (
+                      <div className="px-6 -mt-2 mb-4">
+                        <div className="relative w-full h-48 rounded-lg overflow-hidden">
+                          <img 
+                            src={recipe.image_url} 
+                            alt={recipe.image_alt || recipe.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src = "/placeholder.svg";
+                            }}
+                          />
+                          {recipe.photographer && (
+                            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                              Photo by {recipe.photographer}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     <CardContent className="space-y-4">
                       {/* Quick Stats */}
                       <div className="flex items-center gap-4 text-sm">

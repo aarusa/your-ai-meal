@@ -476,7 +476,11 @@ export default function MealDetail() {
                 f: recipeData.nutrition?.fat || 0,
               },
               tags: recipeData.tags || [],
-              generationType: 'type2'
+              generationType: 'type2',
+              image: recipeData.image_url || "/placeholder.svg",
+              image_alt: recipeData.image_alt || recipeData.name,
+              photographer: recipeData.photographer,
+              photographer_url: recipeData.photographer_url
             };
             setMeal(convertedMeal);
             setAiMeal(null);
@@ -721,8 +725,8 @@ export default function MealDetail() {
             {/* Main Image */}
             <div className="relative w-full mb-8 max-w-4xl mx-auto">
               <img 
-                src={generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
-                alt={`${currentMeal.name || currentMeal.title} recipe`}
+                src={currentMeal.image || generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
+                alt={currentMeal.image_alt || `${currentMeal.name || currentMeal.title} recipe`}
                 className="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-3xl shadow-2xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -730,6 +734,22 @@ export default function MealDetail() {
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>
+              {currentMeal.photographer && (
+                <div className="absolute bottom-4 right-4 bg-black/70 text-white text-sm px-3 py-2 rounded-lg backdrop-blur-sm">
+                  Photo by {currentMeal.photographer_url ? (
+                    <a 
+                      href={currentMeal.photographer_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline hover:text-blue-300"
+                    >
+                      {currentMeal.photographer}
+                    </a>
+                  ) : (
+                    currentMeal.photographer
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
