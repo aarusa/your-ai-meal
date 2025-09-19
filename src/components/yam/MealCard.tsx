@@ -44,7 +44,20 @@ export function MealCard({ label, calories, title, image, macros, className, mea
       )}
       onClick={handleClick}
     >
-      <img src={image} alt={`${title} healthy meal`} loading="lazy" className="w-full h-40 object-cover" />
+      <img 
+        src={image} 
+        alt={`${title} healthy meal`} 
+        loading="lazy" 
+        className="w-full h-56 object-cover" 
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          console.log('MealCard image failed to load:', target.src);
+          target.src = "/placeholder.svg";
+        }}
+        onLoad={(e) => {
+          console.log('MealCard image loaded successfully:', (e.target as HTMLImageElement).src);
+        }}
+      />
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center justify-between">
           <Badge variant="secondary">{label}</Badge>

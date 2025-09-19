@@ -9,7 +9,7 @@ import { AddMealsDialog } from "@/components/yam/AddMealsDialog";
 import { toast } from "sonner";
 import { CaloriesCard } from "@/components/yam/CaloriesCard";
 import { useNavigate } from "react-router-dom";
-import { generateDailyMealPlan, DailyMealPlan, AIRecipe } from "@/lib/api";
+import { generateDailyMealPlan, getRandomImage, DailyMealPlan, AIRecipe } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
@@ -17,13 +17,113 @@ import avo from "@/assets/meal-avocado-toast.jpg";
 import yogurt from "@/assets/meal-greek-yogurt-berries.jpg";
 import chicken from "@/assets/meal-chicken-sweetpotato-greenbeans.jpg";
 
-// Fallback meals if AI generation fails
+// Generate local food image URL - same logic as backend
+  const generateLocalFoodImage = (mealName: string, category: string) => {
+  const categoryMap: { [key: string]: string } = {
+    'breakfast': 'breakfast',
+    'lunch': 'lunch', 
+    'snack': 'snack',
+    'dinner': 'dinner',
+    'dessert': 'snack'
+  };
+  
+  const imageFolder = categoryMap[category?.toLowerCase()] || 'general';
+  
+  // Create a seed based on meal name for consistency (same as backend)
+  const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Use a more random approach - cycle through images 1-9 (only 9 images available)
+  const imageNumber = (seed % 9) + 1;
+  
+  const imagePath = `/food-images/${imageFolder}/food-${imageNumber}.jpg`;
+  console.log('🍽️ Generated local food image:', {
+    mealName,
+    category,
+    imageFolder,
+    imageNumber,
+    imagePath,
+    fullUrl: `${window.location.origin}${imagePath}`
+  });
+  
+  return imagePath;
+};
+
+// Generate random image from general folder as ultimate fallback
+const generateRandomGeneralImage = (mealName: string) => {
+  // Create a seed based on meal name for consistency
+  const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Randomly select from general folder images 1-9 (only 9 images available)
+  const imageNumber = (seed % 9) + 1;
+  
+  const imagePath = `/food-images/general/food-${imageNumber}.jpg`;
+  console.log('🎲 Generated random general image:', {
+    mealName,
+    imageNumber,
+    imagePath,
+    fullUrl: `${window.location.origin}${imagePath}`
+  });
+  
+  return imagePath;
+};
+
+  // Test if an image exists
+const testImageExists = (imagePath: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = imagePath;
+  });
+};
+
+// Test function to verify images
+const testImages = async () => {
+  console.log('🧪 Testing image availability...');
+  const testPaths = [
+    '/food-images/general/food-1.jpg',
+    '/food-images/breakfast/food-1.jpg',
+    '/food-images/lunch/food-1.jpg',
+    '/food-images/snack/food-1.jpg',
+    '/food-images/dinner/food-1.jpg'
+  ];
+  
+  for (const path of testPaths) {
+    const exists = await testImageExists(path);
+    console.log(`Image ${path}: ${exists ? '✅ EXISTS' : '❌ MISSING'}`);
+  }
+};
+
+// Force update all images
+const forceUpdateImages = () => {
+  console.log('🔄 Force updating all meal images...');
+  const updatedMeals = currentMeals.map(meal => {
+    const categoryImage = generateLocalFoodImage(meal.title, meal.time);
+    const generalImage = generateRandomGeneralImage(meal.title);
+    const finalImage = categoryImage || generalImage;
+    
+    console.log(`Force updating ${meal.title}:`, {
+      original: meal.img,
+      category: categoryImage,
+      general: generalImage,
+      final: finalImage
+    });
+    
+    return { ...meal, img: finalImage };
+  });
+  
+  setCurrentMeals(updatedMeals);
+  console.log('✅ All images force updated!');
+};
+
+// Fallback meals if AI generation fails - will be updated with random images from API
 const fallbackMeals = [
-  { id: "oatmeal-berries", time: "Breakfast", kcal: 350, img: oat, title: "Oatmeal with Almonds & Berries", macros: { c: 45, p: 12, f: 14 }, recipeData: null },
-  { id: "avocado-toast", time: "Lunch", kcal: 450, img: avo, title: "Avocado Toast with Egg", macros: { c: 40, p: 18, f: 18 }, recipeData: null },
-  { id: "greek-yogurt-berries", time: "Snack", kcal: 200, img: yogurt, title: "Greek Yogurt with Berries", macros: { c: 18, p: 14, f: 9 }, recipeData: null },
-  { id: "chicken-sweetpotato", time: "Dinner", kcal: 600, img: chicken, title: "Grilled Chicken, Sweet Potato & Greens", macros: { c: 45, p: 42, f: 18 }, recipeData: null },
+  { id: "oatmeal-berries", time: "Breakfast", kcal: 350, img: "/placeholder.svg", title: "Oatmeal with Almonds & Berries", macros: { c: 45, p: 12, f: 14 }, recipeData: null },
+  { id: "avocado-toast", time: "Lunch", kcal: 450, img: "/placeholder.svg", title: "Avocado Toast with Egg", macros: { c: 40, p: 18, f: 18 }, recipeData: null },
+  { id: "greek-yogurt-berries", time: "Snack", kcal: 200, img: "/placeholder.svg", title: "Greek Yogurt with Berries", macros: { c: 18, p: 14, f: 9 }, recipeData: null },
+  { id: "chicken-sweetpotato", time: "Dinner", kcal: 600, img: "/placeholder.svg", title: "Grilled Chicken, Sweet Potato & Greens", macros: { c: 45, p: 42, f: 18 }, recipeData: null },
 ];
+
 
 const Index = () => {
   const navigate = useNavigate();
@@ -37,20 +137,31 @@ const Index = () => {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Convert AI recipe to meal format for MealCard
-  const convertAIRecipeToMeal = (recipe: AIRecipe) => ({
-    id: recipe.id,
-    time: recipe.category,
-    kcal: recipe.nutrition.calories,
-    img: recipe.image_url || "/placeholder.svg",
-    title: recipe.name,
-    macros: { 
-      c: recipe.nutrition.carbs, 
-      p: recipe.nutrition.protein, 
-      f: recipe.nutrition.fat 
-    },
-    // Store full recipe data for detail view
-    recipeData: recipe
-  });
+  const convertAIRecipeToMeal = (recipe: AIRecipe) => {
+    // Always ensure we have a valid image URL
+    const imageUrl = recipe.image_url || generateLocalFoodImage(recipe.name, recipe.category);
+    console.log('Converting AI recipe to meal:', {
+      name: recipe.name,
+      category: recipe.category,
+      imageUrl: imageUrl,
+      hasImageUrl: !!recipe.image_url
+    });
+    
+    return {
+      id: recipe.id,
+      time: recipe.category,
+      kcal: recipe.nutrition.calories,
+      img: imageUrl,
+      title: recipe.name,
+      macros: { 
+        c: recipe.nutrition.carbs, 
+        p: recipe.nutrition.protein, 
+        f: recipe.nutrition.fat 
+      },
+      // Store full recipe data for detail view
+      recipeData: recipe
+    };
+  };
 
   // Type for converted meals
   type ConvertedMeal = ReturnType<typeof convertAIRecipeToMeal>;
@@ -68,7 +179,8 @@ const Index = () => {
           const plan = JSON.parse(cachedPlan);
           setDailyPlan(plan);
           const convertedMeals = plan.meals.map(convertAIRecipeToMeal);
-          setCurrentMeals(convertedMeals);
+          const mealsWithImages = await ensureMealsHaveImages(convertedMeals);
+          setCurrentMeals(mealsWithImages);
           setIsInitialLoading(false);
           return;
         } catch (error) {
@@ -85,9 +197,10 @@ const Index = () => {
       // Cache the plan for today
       localStorage.setItem(cacheKey, JSON.stringify(plan));
       
-      // Convert AI recipes to meal format
+      // Convert AI recipes to meal format and ensure all have images
       const convertedMeals = plan.meals.map(convertAIRecipeToMeal);
-      setCurrentMeals(convertedMeals);
+      const mealsWithImages = await ensureMealsHaveImages(convertedMeals);
+      setCurrentMeals(mealsWithImages);
       
       toast.success("Daily meal plan generated!", {
         description: "Your personalized 4-course meal plan is ready"
@@ -97,17 +210,199 @@ const Index = () => {
       toast.error("Failed to generate meal plan", {
         description: "Using fallback meals instead"
       });
-      setCurrentMeals(fallbackMeals);
+      // Use fallback meals with random images from API
+      const fallbackMealsWithImages = await loadFallbackImagesFromAPI();
+      setCurrentMeals(fallbackMealsWithImages);
     } finally {
       setIsGeneratingPlan(false);
       setIsInitialLoading(false);
     }
   };
 
+  // Load random images for fallback meals using API
+  const loadFallbackImagesFromAPI = async () => {
+    console.log('Loading fallback images from API for meals:', fallbackMeals.map(m => ({ title: m.title, time: m.time })));
+    
+    try {
+      const updatedMeals = await Promise.all(
+        fallbackMeals.map(async (meal, index) => {
+          console.log(`Loading image for meal ${index + 1}: ${meal.title} (${meal.time})`);
+          try {
+            const randomImage = await getRandomImage(meal.time.toLowerCase(), meal.title);
+            console.log(`Successfully loaded image for ${meal.title}:`, randomImage);
+            return { ...meal, img: randomImage };
+          } catch (mealError) {
+            console.error(`Failed to load image for ${meal.title}:`, mealError);
+            const fallbackImage = generateLocalFoodImage(meal.title, meal.time);
+            console.log(`Using fallback image for ${meal.title}:`, fallbackImage);
+            return { ...meal, img: fallbackImage };
+          }
+        })
+      );
+      console.log('All fallback images loaded:', updatedMeals.map(m => ({ title: m.title, img: m.img })));
+      return updatedMeals;
+    } catch (error) {
+      console.error('Failed to load fallback images from API:', error);
+      // Fallback to local image generation
+      const localFallback = fallbackMeals.map(meal => ({
+        ...meal,
+        img: generateLocalFoodImage(meal.title, meal.time)
+      }));
+      console.log('Using local fallback images:', localFallback.map(m => ({ title: m.title, img: m.img })));
+      return localFallback;
+    }
+  };
+
+  // Ensure all meals have images - try API first, fallback to local
+  const ensureMealsHaveImages = async (meals: ConvertedMeal[]) => {
+    const updatedMeals = await Promise.all(
+      meals.map(async (meal) => {
+        if (!meal.img || meal.img === '/placeholder.svg') {
+          try {
+            // Try to get random image from API first
+            const randomImage = await getRandomImage(meal.time.toLowerCase(), meal.title);
+            console.log('Ensuring meal has image from API:', {
+              title: meal.title,
+              time: meal.time,
+              originalImg: meal.img,
+              newImg: randomImage
+            });
+            return { ...meal, img: randomImage };
+          } catch (error) {
+            // Fallback to local image generation, then to general folder
+            const categoryImage = generateLocalFoodImage(meal.title, meal.time);
+            const generalImage = generateRandomGeneralImage(meal.title);
+            const imageUrl = categoryImage || generalImage;
+            
+            console.log('Ensuring meal has image (fallback to local):', {
+              title: meal.title,
+              time: meal.time,
+              originalImg: meal.img,
+              categoryImg: categoryImage,
+              generalImg: generalImage,
+              finalImg: imageUrl
+            });
+            return { ...meal, img: imageUrl };
+          }
+        }
+        return meal;
+      })
+    );
+    return updatedMeals;
+  };
+
+  // Test API connectivity
+  const testAPIConnectivity = async () => {
+    try {
+      console.log('Testing API connectivity...');
+      const testImage = await getRandomImage('lunch', 'test');
+      console.log('API test successful, got image:', testImage);
+      return true;
+    } catch (error) {
+      console.error('API test failed:', error);
+      return false;
+    }
+  };
+
   // Load daily plan on component mount
   useEffect(() => {
     generateDailyPlan();
+    // Test API connectivity
+    testAPIConnectivity();
   }, []);
+
+  // Load fallback images on component mount as backup
+  useEffect(() => {
+    const loadInitialFallbackImages = async () => {
+      console.log('Loading initial fallback images...');
+      console.log('Current meals state:', currentMeals.map(m => ({ title: m.title, img: m.img })));
+      
+      try {
+        const fallbackMealsWithImages = await loadFallbackImagesFromAPI();
+        console.log('Loaded fallback images:', fallbackMealsWithImages.map(m => ({ title: m.title, img: m.img })));
+        
+        // Only set if no AI meals are loaded yet
+        if (currentMeals.length === 0 || currentMeals.every(meal => meal.img === '/placeholder.svg')) {
+          console.log('Setting fallback meals as current meals');
+          setCurrentMeals(fallbackMealsWithImages);
+        } else {
+          console.log('AI meals already loaded, not setting fallback meals');
+        }
+      } catch (error) {
+        console.error('Failed to load initial fallback images:', error);
+        // Emergency fallback - ensure all meals have at least local images
+        const emergencyFallback = fallbackMeals.map(meal => {
+          const categoryImage = generateLocalFoodImage(meal.title, meal.time);
+          const generalImage = generateRandomGeneralImage(meal.title);
+          return {
+            ...meal,
+            img: categoryImage || generalImage
+          };
+        });
+        console.log('Using emergency fallback with local images:', emergencyFallback.map(m => ({ title: m.title, img: m.img })));
+        setCurrentMeals(emergencyFallback);
+      }
+    };
+    
+    loadInitialFallbackImages();
+  }, []);
+
+  // Ensure all meals have images whenever currentMeals changes
+  useEffect(() => {
+    const updateMealsWithImages = async () => {
+      if (currentMeals.length > 0) {
+        console.log('Checking meals for missing images:', currentMeals.map(m => ({ title: m.title, img: m.img })));
+        
+        // Check if any meals are missing images
+        const mealsNeedingImages = currentMeals.filter(meal => 
+          !meal.img || meal.img === '/placeholder.svg'
+        );
+        
+        if (mealsNeedingImages.length > 0) {
+          console.log('Found meals needing images:', mealsNeedingImages.map(m => m.title));
+          const mealsWithImages = await ensureMealsHaveImages(currentMeals);
+          console.log('Updated meals with images:', mealsWithImages.map(m => ({ title: m.title, img: m.img })));
+          setCurrentMeals(mealsWithImages);
+        } else {
+          console.log('All meals already have images');
+        }
+      }
+    };
+    
+    updateMealsWithImages();
+  }, [currentMeals.length]); // Only run when the number of meals changes
+
+  // Additional check for placeholder images - run after a short delay
+  useEffect(() => {
+    const checkForPlaceholders = () => {
+      const hasPlaceholders = currentMeals.some(meal => 
+        meal.img === '/placeholder.svg' || !meal.img
+      );
+      
+      if (hasPlaceholders) {
+        console.log('Found placeholder images, updating...');
+        const updatedMeals = currentMeals.map(meal => {
+          if (!meal.img || meal.img === '/placeholder.svg') {
+            // Try category-specific image first, then fallback to general
+            const categoryImage = generateLocalFoodImage(meal.title, meal.time);
+            const generalImage = generateRandomGeneralImage(meal.title);
+            
+            return {
+              ...meal,
+              img: categoryImage || generalImage
+            };
+          }
+          return meal;
+        });
+        setCurrentMeals(updatedMeals);
+      }
+    };
+    
+    // Run after a short delay to allow for initial loading
+    const timeoutId = setTimeout(checkForPlaceholders, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [currentMeals]);
+
 
   const handleTrack = (meal: any) => {
     const newIndex = foodLogMeals.length;
@@ -221,23 +516,39 @@ const Index = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">Today's meal plan</div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => generateDailyPlan(true)}
-                disabled={isGeneratingPlan}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
-                {isGeneratingPlan ? 'Generating...' : 'Refresh Plan'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={testImages}
+                >
+                  Test Images
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={forceUpdateImages}
+                >
+                  Force Update
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => generateDailyPlan(true)}
+                  disabled={isGeneratingPlan}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
+                  {isGeneratingPlan ? 'Generating...' : 'Refresh Plan'}
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isInitialLoading ? (
                 // Loading skeleton
                 Array.from({ length: 4 }).map((_, index) => (
                   <Card key={index} className="animate-pulse">
-                    <div className="h-40 bg-muted"></div>
+                    <div className="h-56 bg-muted"></div>
                     <CardContent className="p-4 space-y-2">
                       <div className="h-4 bg-muted rounded w-1/3"></div>
                       <div className="h-4 bg-muted rounded w-2/3"></div>
@@ -246,22 +557,49 @@ const Index = () => {
                   </Card>
                 ))
               ) : (
-                currentMeals.map((meal, index) => (
-                  <MealCard 
-                    key={`${meal.time}-${index}`}
-                    mealId={meal.id}
-                    label={meal.time} 
-                    calories={meal.kcal} 
-                    title={meal.title} 
-                    image={meal.img} 
-                    macros={meal.macros} 
-                    showActions 
-                    recipeData={meal.recipeData}
-                    onTrack={() => handleTrack(meal)} 
-                    onMissed={() => {}} 
-                    onSwap={() => { setSwapFilter(meal.time as "Breakfast" | "Lunch" | "Snack" | "Dinner"); setSwapOpen(true); }} 
-                  />
-                ))
+                currentMeals.map((meal, index) => {
+                  // Ensure each meal has a valid image - try multiple fallbacks
+                  let finalImage = meal.img;
+                  
+                  // If no image or placeholder, generate one
+                  if (!finalImage || finalImage === '/placeholder.svg') {
+                    const categoryImage = generateLocalFoodImage(meal.title, meal.time);
+                    console.log(`Generated category image for ${meal.title}:`, categoryImage);
+                    finalImage = categoryImage;
+                  }
+                  
+                  // Double-check we have a valid image
+                  if (!finalImage || finalImage === '/placeholder.svg') {
+                    // Ultimate fallback - use random image from general folder
+                    finalImage = generateRandomGeneralImage(meal.title);
+                    console.log(`🎲 Ultimate fallback - random general image for ${meal.title}:`, finalImage);
+                  }
+                  
+                  console.log(`Rendering meal ${index + 1}:`, {
+                    title: meal.title,
+                    time: meal.time,
+                    originalImage: meal.img,
+                    finalImage: finalImage,
+                    hasImage: !!finalImage && finalImage !== '/placeholder.svg'
+                  });
+                  
+                  return (
+                <MealCard 
+                  key={`${meal.time}-${index}`}
+                  mealId={meal.id}
+                  label={meal.time} 
+                  calories={meal.kcal} 
+                  title={meal.title} 
+                      image={finalImage} 
+                  macros={meal.macros} 
+                  showActions 
+                      recipeData={meal.recipeData}
+                  onTrack={() => handleTrack(meal)} 
+                  onMissed={() => {}} 
+                  onSwap={() => { setSwapFilter(meal.time as "Breakfast" | "Lunch" | "Snack" | "Dinner"); setSwapOpen(true); }} 
+                />
+                  );
+                })
               )}
             </div>
           </div>

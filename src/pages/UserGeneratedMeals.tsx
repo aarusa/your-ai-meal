@@ -39,16 +39,24 @@ import {
   deleteMeal
 } from "@/lib/api";
 
-// Generate food image URL using static.photos
-const generateUnsplashFoodImage = (mealName: string) => {
-  const width = 400;
-  const height = 300;
+// Generate local food image URL
+const generateLocalFoodImage = (mealName: string, category?: string) => {
+  // Map categories to image folders
+  const categoryMap: { [key: string]: string } = {
+    'breakfast': 'breakfast',
+    'lunch': 'lunch', 
+    'snack': 'snack',
+    'dinner': 'dinner',
+    'dessert': 'snack'
+  };
+  
+  const imageFolder = categoryMap[category?.toLowerCase() || ''] || 'general';
   
   // Create a seed based on meal name for consistent images
   const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const imageNumber = (seed % 10) + 1; // Assuming 10 images per category
   
-  // Use static.photos for food images - hand-curated, contextual images
-  return `https://static.photos/food/${width}x${height}/${seed}`;
+  return `/food-images/${imageFolder}/food-${imageNumber}.jpg`;
 };
 
 export default function UserGeneratedMeals() {
@@ -514,12 +522,12 @@ export default function UserGeneratedMeals() {
                           {/* Meal Image */}
                           <div className="relative h-48 overflow-hidden">
                             <img 
-                              src={generateUnsplashFoodImage(meal.name)} 
+                              src={generateLocalFoodImage(meal.name, meal.meal_type)} 
                               alt={meal.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                                target.src = "/placeholder.svg";
                               }}
                             />
                             <div className="absolute top-3 right-3">
@@ -675,12 +683,12 @@ export default function UserGeneratedMeals() {
                           {/* Meal Image */}
                           <div className="relative h-48 overflow-hidden">
                             <img 
-                              src={generateUnsplashFoodImage(meal.name)} 
+                              src={generateLocalFoodImage(meal.name, meal.meal_type)} 
                               alt={meal.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                                target.src = "/placeholder.svg";
                               }}
                             />
                             <div className="absolute top-3 right-3">
@@ -833,12 +841,12 @@ export default function UserGeneratedMeals() {
                           {/* Meal Image */}
                           <div className="relative h-48 overflow-hidden">
                             <img 
-                              src={generateUnsplashFoodImage(meal.name)} 
+                              src={generateLocalFoodImage(meal.name, meal.meal_type)} 
                               alt={meal.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                                target.src = "/placeholder.svg";
                               }}
                             />
                             <div className="absolute top-3 right-3">
@@ -991,12 +999,12 @@ export default function UserGeneratedMeals() {
                           {/* Meal Image */}
                           <div className="relative h-48 overflow-hidden">
                             <img 
-                              src={generateUnsplashFoodImage(meal.name)} 
+                              src={generateLocalFoodImage(meal.name, meal.meal_type)} 
                               alt={meal.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                target.src = `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`;
+                                target.src = "/placeholder.svg";
                               }}
                             />
                             <div className="absolute top-3 right-3">

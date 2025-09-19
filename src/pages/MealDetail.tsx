@@ -12,16 +12,27 @@ import { ApiMeal } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Generate food image URL using static.photos
-const generateUnsplashFoodImage = (mealName: string) => {
-  const width = 800;
-  const height = 600;
+// Generate local food image URL
+const generateLocalFoodImage = (mealName: string, category?: string) => {
+  // Map categories to image folders
+  const categoryMap: { [key: string]: string } = {
+    'breakfast': 'breakfast',
+    'lunch': 'lunch', 
+    'snack': 'snack',
+    'dinner': 'dinner',
+    'dessert': 'snack'
+  };
+  
+  const imageFolder = categoryMap[category?.toLowerCase() || ''] || 'general';
   
   // Create a seed based on meal name for consistent images
   const seed = mealName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const imageNumber = (seed % 10) + 1; // Assuming 10 images per category
   
-  // Use static.photos for food images - hand-curated, contextual images
-  return `https://static.photos/food/${width}x${height}/${seed}`;
+  const imagePath = `/food-images/${imageFolder}/food-${imageNumber}.jpg`;
+  console.log('Generated image path:', imagePath, 'for meal:', mealName, 'category:', category);
+  
+  return imagePath;
 };
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
@@ -725,12 +736,16 @@ export default function MealDetail() {
             {/* Main Image */}
             <div className="relative w-full mb-8 max-w-4xl mx-auto">
               <img 
-                src={currentMeal.image || generateUnsplashFoodImage(currentMeal.name || currentMeal.title)} 
+                src={currentMeal.image || generateLocalFoodImage(currentMeal.name || currentMeal.title, currentMeal.category || currentMeal.label)} 
                 alt={currentMeal.image_alt || `${currentMeal.name || currentMeal.title} recipe`}
                 className="w-full h-64 sm:h-80 lg:h-96 object-cover rounded-3xl shadow-2xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`;
+                  console.log('Image failed to load:', target.src);
+                  target.src = "/placeholder.svg";
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', (e.target as HTMLImageElement).src);
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-3xl"></div>

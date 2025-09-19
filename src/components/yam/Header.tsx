@@ -2,16 +2,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { YamLogo } from "./Logo";
-import { Search, Sparkles, ChefHat, BookOpen, Menu, X } from "lucide-react";
+import { Search, Sparkles, ChefHat, BookOpen, Menu, X, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { searchProducts as searchDbProducts, convertDbProductToProduct, DbProduct, testProductsExist, getAllProducts } from "@/integrations/supabase/queries";
 import { Product } from "@/data/products";
+import { useToast } from "@/components/ui/use-toast";
 import { SearchResults } from "./SearchResults";
 
 export function DashboardHeader() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [initial, setInitial] = useState<string>("U");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -87,6 +89,24 @@ export function DashboardHeader() {
     setIsMobileMenuOpen(false);
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -159,13 +179,24 @@ export function DashboardHeader() {
           </Button>
         </div>
 
-        {/* Desktop Profile Avatar */}
-        <Avatar 
-          className="cursor-pointer hidden sm:flex" 
-          onClick={() => navigate("/profile")}
-        >
-          <AvatarFallback>{initial}</AvatarFallback>
-        </Avatar>
+        {/* Desktop Profile Avatar and Sign Out */}
+        <div className="hidden sm:flex items-center gap-2">
+          <Avatar 
+            className="cursor-pointer" 
+            onClick={() => navigate("/profile")}
+          >
+            <AvatarFallback>{initial}</AvatarFallback>
+          </Avatar>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            aria-label="Sign Out"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* Mobile Menu Button (replaces profile icon) */}
         <Button
@@ -236,6 +267,15 @@ export function DashboardHeader() {
                       <AvatarFallback className="text-xs font-medium">{initial}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">Profile</span>
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start h-12 px-4 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    <span className="font-medium">Sign Out</span>
                   </Button>
                 </div>
               </div>

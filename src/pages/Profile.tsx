@@ -252,20 +252,20 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <DashboardHeader />
 
       <main className="container max-w-6xl mx-auto px-4 py-6">
         {isLoading ? (
           <div className="text-center text-muted-foreground py-12">Loading profile...</div>
         ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">User Profile</h1>
             <p className="text-muted-foreground">Manage your personal information and dietary preferences</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Personal Information */}
             <Card>
               <CardHeader>
@@ -295,7 +295,7 @@ export default function Profile() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="age">Age</Label>
                     <Input 
@@ -324,7 +324,7 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="height">Height (cm)</Label>
                     <Input 
@@ -411,17 +411,17 @@ export default function Profile() {
           </div>
 
           {/* Dietary Preferences */}
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Utensils className="h-5 w-5" />
                 Dietary Preferences
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 w-full">
               <div className="space-y-3">
                 <Label>Dietary preferences</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {dietaryOptions.map((opt) => (
                     <div key={opt.id} className="flex items-center space-x-2">
                       <Checkbox
@@ -443,7 +443,7 @@ export default function Profile() {
 
               <div className="space-y-3">
                 <Label>Allergies</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {allergyOptions.map((opt) => (
                     <div key={opt.id} className="flex items-center space-x-2">
                       <Checkbox
@@ -465,7 +465,7 @@ export default function Profile() {
 
               <div className="space-y-3">
                 <Label>Favorite cuisines</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {cuisineOptions.map((opt) => (
                     <div key={opt.id} className="flex items-center space-x-2">
                       <Checkbox

@@ -50,6 +50,30 @@ export interface DailyMealPlan {
   meals: AIRecipe[];
 }
 
+export async function getRandomImage(category: string, mealName?: string): Promise<string> {
+  try {
+    const params = new URLSearchParams();
+    if (mealName) params.append('mealName', mealName);
+    
+    const response = await fetch(`${API_BASE}/api/ai/random-image/${category}?${params}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get random image: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.image_url || "/placeholder.svg";
+  } catch (error) {
+    console.error('Error getting random image:', error);
+    return "/placeholder.svg";
+  }
+}
+
 export async function generateDailyMealPlan(userId?: string): Promise<DailyMealPlan> {
   try {
     const response = await fetch(`${API_BASE}/api/ai/daily-plan`, {
