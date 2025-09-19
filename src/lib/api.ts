@@ -45,6 +45,33 @@ export interface AIRecipe {
   photographer_url?: string;
 }
 
+export interface DailyMealPlan {
+  date: string;
+  meals: AIRecipe[];
+}
+
+export async function generateDailyMealPlan(userId?: string): Promise<DailyMealPlan> {
+  try {
+    const response = await fetch(`${API_BASE}/api/ai/daily-plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate daily meal plan: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.dailyPlan || { date: new Date().toISOString().split('T')[0], meals: [] };
+  } catch (error) {
+    console.error('Error generating daily meal plan:', error);
+    throw error;
+  }
+}
+
 export async function generateAIRecipe(request: GenerateAIRecipeRequest): Promise<AIRecipe[]> {
   try {
     const response = await fetch(`${API_BASE}/api/ai/plan`, {

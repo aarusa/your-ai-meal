@@ -17,14 +17,21 @@ interface MealCardProps {
   onTrack?: () => void;
   onMissed?: () => void;
   onSwap?: () => void;
+  recipeData?: any; // AI recipe data for detail view
 }
 
-export function MealCard({ label, calories, title, image, macros, className, mealId, showActions, onTrack, onMissed, onSwap }: MealCardProps) {
+export function MealCard({ label, calories, title, image, macros, className, mealId, showActions, onTrack, onMissed, onSwap, recipeData }: MealCardProps) {
   const navigate = useNavigate();
   const [missed, setMissed] = useState(false);
   
   const handleClick = () => {
     const targetId = mealId ?? encodeURIComponent(title);
+    
+    // If this is an AI-generated recipe, store the data for the detail page
+    if (recipeData) {
+      localStorage.setItem('selectedRecipe', JSON.stringify(recipeData));
+    }
+    
     navigate(`/meal/${targetId}`);
   };
 
