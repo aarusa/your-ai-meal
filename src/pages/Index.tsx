@@ -67,55 +67,6 @@ const generateRandomGeneralImage = (mealName: string) => {
   return imagePath;
 };
 
-  // Test if an image exists
-const testImageExists = (imagePath: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = imagePath;
-  });
-};
-
-// Test function to verify images
-const testImages = async () => {
-  console.log('🧪 Testing image availability...');
-  const testPaths = [
-    '/food-images/general/food-1.jpg',
-    '/food-images/breakfast/food-1.jpg',
-    '/food-images/lunch/food-1.jpg',
-    '/food-images/snack/food-1.jpg',
-    '/food-images/dinner/food-1.jpg'
-  ];
-  
-  for (const path of testPaths) {
-    const exists = await testImageExists(path);
-    console.log(`Image ${path}: ${exists ? '✅ EXISTS' : '❌ MISSING'}`);
-  }
-};
-
-// Force update all images
-const forceUpdateImages = () => {
-  console.log('🔄 Force updating all meal images...');
-  const updatedMeals = currentMeals.map(meal => {
-    const categoryImage = generateLocalFoodImage(meal.title, meal.time);
-    const generalImage = generateRandomGeneralImage(meal.title);
-    const finalImage = categoryImage || generalImage;
-    
-    console.log(`Force updating ${meal.title}:`, {
-      original: meal.img,
-      category: categoryImage,
-      general: generalImage,
-      final: finalImage
-    });
-    
-    return { ...meal, img: finalImage };
-  });
-  
-  setCurrentMeals(updatedMeals);
-  console.log('✅ All images force updated!');
-};
-
 // Fallback meals if AI generation fails - will be updated with random images from API
 const fallbackMeals = [
   { id: "oatmeal-berries", time: "Breakfast", kcal: 350, img: "/placeholder.svg", title: "Oatmeal with Almonds & Berries", macros: { c: 45, p: 12, f: 14 }, recipeData: null },
@@ -516,32 +467,16 @@ const Index = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">Today's meal plan</div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={testImages}
-                >
-                  Test Images
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={forceUpdateImages}
-                >
-                  Force Update
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => generateDailyPlan(true)}
-                  disabled={isGeneratingPlan}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
-                  {isGeneratingPlan ? 'Generating...' : 'Refresh Plan'}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generateDailyPlan(true)}
+                disabled={isGeneratingPlan}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isGeneratingPlan ? 'animate-spin' : ''}`} />
+                {isGeneratingPlan ? 'Generating...' : 'Refresh Plan'}
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {isInitialLoading ? (
