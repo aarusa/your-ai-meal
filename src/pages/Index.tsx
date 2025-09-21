@@ -11,6 +11,7 @@ import { CaloriesCard } from "@/components/yam/CaloriesCard";
 import { useNavigate } from "react-router-dom";
 import { generateDailyMealPlan, getRandomImage, DailyMealPlan, AIRecipe } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useSimpleMealTracking } from "@/hooks/useSimpleMealTracking";
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
 import avo from "@/assets/meal-avocado-toast.jpg";
@@ -86,6 +87,10 @@ const Index = () => {
   const [dailyPlan, setDailyPlan] = useState<DailyMealPlan | null>(null);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  
+  // Simple meal tracking
+  const { logMeal } = useSimpleMealTracking();
+  
 
   // Convert AI recipe to meal format for MealCard
   const convertAIRecipeToMeal = (recipe: AIRecipe) => {
@@ -355,11 +360,45 @@ const Index = () => {
   }, [currentMeals]);
 
 
-  const handleTrack = (meal: any) => {
-    const newIndex = foodLogMeals.length;
-    setFoodLogMeals(prev => [...prev, meal]);
-    // Automatically check the newly tracked meal
-    setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
+  const handleTrackClick = async (meal: any) => {
+    console.log('Track button clicked for:', meal.title);
+    console.log('Meal data:', {
+      title: meal.title,
+      time: meal.time,
+      kcal: meal.kcal,
+      recipeData: meal.recipeData,
+      mealId: meal.recipeData?.id
+    });
+    
+    try {
+      // Log to database - only include mealId if it's a valid UUID
+      const mealId = meal.recipeData?.id;
+      const isValidUUID = mealId && typeof mealId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mealId);
+      
+      console.log('Meal ID validation:', { mealId, isValidUUID });
+      
+      const loggedMeal = await logMeal({
+        mealId: isValidUUID ? mealId : undefined,
+        mealName: meal.title,
+        mealType: meal.time.toLowerCase(),
+        calories: meal.kcal
+      });
+      
+      if (loggedMeal) {
+        // Add to local food log for UI
+        const newIndex = foodLogMeals.length;
+        setFoodLogMeals(prev => [...prev, meal]);
+        setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
+        
+        console.log('✅ Meal tracked successfully:', loggedMeal);
+      }
+    } catch (error) {
+      console.error('❌ Error tracking meal:', error);
+      // Still add to local food log even if database fails
+      const newIndex = foodLogMeals.length;
+      setFoodLogMeals(prev => [...prev, meal]);
+      setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
+    }
   };
 
   const handleAddMeal = (newMeal: any) => {
@@ -525,13 +564,14 @@ const Index = () => {
                   label={meal.time} 
                   calories={meal.kcal} 
                   title={meal.title} 
-                      image={finalImage} 
+                  image={finalImage} 
                   macros={meal.macros} 
                   showActions 
-                      recipeData={meal.recipeData}
-                  onTrack={() => handleTrack(meal)} 
+                  recipeData={meal.recipeData}
+                  onTrack={() => handleTrackClick(meal)} 
                   onMissed={() => {}} 
-                  onSwap={() => { setSwapFilter(meal.time as "Breakfast" | "Lunch" | "Snack" | "Dinner"); setSwapOpen(true); }} 
+                  onSwap={() => { setSwapFilter(meal.time as "Breakfast" | "Lunch" | "Snack" | "Dinner"); setSwapOpen(true); }}
+                  disabled={false}
                 />
                   );
                 })

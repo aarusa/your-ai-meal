@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { fetchMeals, insertMealLog } from "@/integrations/supabase/queries";
+// import { fetchMeals, insertMealLog } from "@/integrations/supabase/queries";
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
 import avo from "@/assets/meal-avocado-toast.jpg";
@@ -52,29 +52,9 @@ export function AddMealsDialog({ open, onOpenChange, onAddMeal, filterTime }: Ad
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const meals = await fetchMeals();
-        const mapped: Meal[] = meals.map((m) => ({
-          id: m.id,
-          time: "Any",
-          kcal: m.calories ?? 0,
-          img: avo,
-          title: m.name,
-          macros: { c: m.carbs ?? 0, p: m.protein ?? 0, f: m.fats ?? 0 },
-        }));
-        setDbMeals(mapped);
-      } catch (e: any) {
-        console.error("Error loading meals:", e);
-        toast.error("Failed to load meals", { 
-          description: e.message ?? e.details ?? String(e) 
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
+    // Skip loading meals from database since we have a proper meal tracking system
+    // Just use static meals for now
+    setDbMeals([]);
   }, []);
 
   const allMeals = [...dbMeals, ...recommendedMealsStatic];
@@ -85,20 +65,14 @@ export function AddMealsDialog({ open, onOpenChange, onAddMeal, filterTime }: Ad
       meal.time.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-  const handleAddMeal = async (meal: Meal) => {
+  const handleAddMeal = (meal: Meal) => {
     onAddMeal(meal);
-    // In swap mode, just replace the card; do not log or show 'added' toast
+    // In swap mode, just replace the card; do not show 'added' toast
     if (filterTime) return;
-    try {
-      if (typeof meal.id === "string") {
-        await insertMealLog(meal.id, 1);
-      }
-      toast.success("Meal Added", { 
-        description: `${meal.title} has been added to your food log.` 
-      });
-    } catch (e: any) {
-      toast.error("Could not log meal", { description: e.message ?? String(e) });
-    }
+    
+    toast.success("Meal Added", { 
+      description: `${meal.title} has been added to your food log.` 
+    });
   };
 
   return (

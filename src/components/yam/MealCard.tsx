@@ -18,9 +18,10 @@ interface MealCardProps {
   onMissed?: () => void;
   onSwap?: () => void;
   recipeData?: any; // AI recipe data for detail view
+  disabled?: boolean; // Disable all actions when loading
 }
 
-export function MealCard({ label, calories, title, image, macros, className, mealId, showActions, onTrack, onMissed, onSwap, recipeData }: MealCardProps) {
+export function MealCard({ label, calories, title, image, macros, className, mealId, showActions, onTrack, onMissed, onSwap, recipeData, disabled = false }: MealCardProps) {
   const navigate = useNavigate();
   const [missed, setMissed] = useState(false);
   
@@ -77,11 +78,16 @@ export function MealCard({ label, calories, title, image, macros, className, mea
         {(showActions || onTrack || onMissed || onSwap) && (
           <div className="flex items-center justify-between pt-2">
             <div>
-              <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); onSwap && onSwap(); }}>Swap</Button>
+              <Button size="sm" variant="secondary" disabled={disabled} onClick={(e) => { e.stopPropagation(); onSwap && onSwap(); }}>Swap</Button>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setMissed(true); onMissed && onMissed(); }}>Missed</Button>
-              <Button size="sm" onClick={(e) => { e.stopPropagation(); setMissed(false); onTrack && onTrack(); }}>Track</Button>
+              <Button size="sm" variant="outline" disabled={disabled} onClick={(e) => { e.stopPropagation(); setMissed(true); onMissed && onMissed(); }}>Missed</Button>
+              <Button 
+                size="sm" 
+                onClick={(e) => { e.stopPropagation(); setMissed(false); onTrack && onTrack(); }}
+              >
+                Track
+              </Button>
             </div>
           </div>
         )}

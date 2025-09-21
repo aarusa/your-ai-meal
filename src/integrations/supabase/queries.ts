@@ -19,37 +19,19 @@ export async function fetchMeals(): Promise<DbMeal[]> {
       return data as DbMeal[];
     }
   } catch (error) {
-    console.warn("Backend API not available, falling back to Supabase:", error);
+    console.warn("Backend API not available, returning empty meals array:", error);
   }
 
-  // Fallback to Supabase
-  const { data, error } = await supabase
-    .from("meals")
-    .select("id,name,calories,protein,carbs,fats")
-    .limit(100);
-
-  if (error) {
-    console.error("Supabase error fetching meals:", error);
-    // Return empty array as fallback instead of throwing
-    console.warn("Using empty meals array as fallback");
-    return [];
-  }
-  return (data ?? []) as DbMeal[];
+  // Return empty array since we don't have the meals table yet
+  // The meal tracking system uses a different approach
+  console.warn("Using empty meals array as fallback");
+  return [];
 }
 
 export async function insertMealLog(mealId: string, quantity: number = 1) {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) throw userError;
-  const userId = userData.user?.id ?? null;
-
-  const { error } = await supabase.from("meal_logs").insert({
-    meal_id: mealId,
-    quantity,
-    user_id: userId,
-    log_date: new Date().toISOString(),
-  });
-
-  if (error) throw error;
+  // This function is deprecated - meal tracking has been removed
+  console.warn("insertMealLog is deprecated - meal tracking has been removed");
+  throw new Error("insertMealLog is deprecated - meal tracking has been removed");
 }
 
 // Product queries
