@@ -11,7 +11,7 @@ import { CaloriesCard } from "@/components/yam/CaloriesCard";
 import { useNavigate } from "react-router-dom";
 import { generateDailyMealPlan, getRandomImage, DailyMealPlan, AIRecipe } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { useSimpleMealTracking } from "@/hooks/useSimpleMealTracking";
+// Removed useSimpleMealTracking - keeping it simple with local Food log only
 
 import oat from "@/assets/meal-oatmeal-berries.jpg";
 import avo from "@/assets/meal-avocado-toast.jpg";
@@ -88,8 +88,7 @@ const Index = () => {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   
-  // Simple meal tracking
-  const { logMeal } = useSimpleMealTracking();
+  // Simple local meal tracking - no database storage
   
 
   // Convert AI recipe to meal format for MealCard
@@ -360,45 +359,25 @@ const Index = () => {
   }, [currentMeals]);
 
 
-  const handleTrackClick = async (meal: any) => {
+  const handleTrackClick = (meal: any) => {
     console.log('Track button clicked for:', meal.title);
-    console.log('Meal data:', {
+    console.log('Adding to Food log:', {
       title: meal.title,
       time: meal.time,
-      kcal: meal.kcal,
-      recipeData: meal.recipeData,
-      mealId: meal.recipeData?.id
+      kcal: meal.kcal
     });
     
-    try {
-      // Log to database - only include mealId if it's a valid UUID
-      const mealId = meal.recipeData?.id;
-      const isValidUUID = mealId && typeof mealId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(mealId);
-      
-      console.log('Meal ID validation:', { mealId, isValidUUID });
-      
-      const loggedMeal = await logMeal({
-        mealId: isValidUUID ? mealId : undefined,
-        mealName: meal.title,
-        mealType: meal.time.toLowerCase(),
-        calories: meal.kcal
-      });
-      
-      if (loggedMeal) {
-        // Add to local food log for UI
-        const newIndex = foodLogMeals.length;
-        setFoodLogMeals(prev => [...prev, meal]);
-        setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
-        
-        console.log('✅ Meal tracked successfully:', loggedMeal);
-      }
-    } catch (error) {
-      console.error('❌ Error tracking meal:', error);
-      // Still add to local food log even if database fails
-      const newIndex = foodLogMeals.length;
-      setFoodLogMeals(prev => [...prev, meal]);
-      setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
-    }
+    // Simply add to local Food log - no database storage
+    const newIndex = foodLogMeals.length;
+    setFoodLogMeals(prev => [...prev, meal]);
+    setCheckedMeals(prev => ({ ...prev, [newIndex]: true }));
+    
+    // Show success toast
+    toast.success("Meal added to Food log!", {
+      description: `${meal.title} has been tracked`
+    });
+    
+    console.log('✅ Meal added to Food log successfully');
   };
 
   const handleAddMeal = (newMeal: any) => {

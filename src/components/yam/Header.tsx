@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { YamLogo } from "./Logo";
-import { Search, Sparkles, ChefHat, BookOpen, Menu, X, LogOut, TrendingUp } from "lucide-react";
+import { Search, Sparkles, ChefHat, BookOpen, Menu, X, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,15 +170,6 @@ export function DashboardHeader() {
           </Button>
 
           <Button 
-            variant="outline" 
-            aria-label="Meal Tracking"
-            onClick={() => navigate("/tracking")}
-          >
-            <TrendingUp className="h-4 w-4" />
-            Tracking
-          </Button>
-
-          <Button 
             variant="hero" 
             aria-label="Generate AI Meals"
             onClick={() => navigate("/generate")}
@@ -254,15 +245,6 @@ export function DashboardHeader() {
                 >
                   <ChefHat className="h-4 w-4 mr-3" />
                   <span className="font-medium">My Meals</span>
-                </Button>
-
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start h-12 px-4 hover:bg-accent/50"
-                  onClick={() => handleMobileMenuNavigation("/tracking")}
-                >
-                  <TrendingUp className="h-4 w-4 mr-3" />
-                  <span className="font-medium">Meal Tracking</span>
                 </Button>
 
                 <Button 
